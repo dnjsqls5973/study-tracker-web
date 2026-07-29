@@ -1,26 +1,38 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import HomePage from './pages/HomePage';
+import StatsPage from './pages/StatsPage';
+import ClassificationPage from './pages/ClassificationPage';
+
+const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
+    const token = localStorage.getItem('accessToken');
+    return token ? children : <Navigate to="/login" />;
+};
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/" element={
+                    <PrivateRoute>
+                        <HomePage />
+                    </PrivateRoute>
+                } />
+                <Route path="/stats" element={
+                    <PrivateRoute>
+                        <StatsPage />
+                    </PrivateRoute>
+                } />
+                <Route path="/classifications" element={
+                    <PrivateRoute>
+                        <ClassificationPage />
+                    </PrivateRoute>
+                } />
+            </Routes>
+        </BrowserRouter>
+    );
 }
 
 export default App;
