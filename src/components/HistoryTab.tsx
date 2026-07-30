@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { getCalendar, getSessions, getWeeklyNotes, getMonthlyNotes } from '../api/stats';
 import { getSessionNotes } from '../api/session';
 import { CalendarData, Session, LogNote, NoteDailySummary } from '../types';
+import { color, radius } from '../theme';
+import { ChevronLeft, ChevronRight, Monitor, Globe } from 'lucide-react';
 
 const formatTime = (sec: number): string => {
     const h = Math.floor(sec / 3600);
@@ -85,6 +87,10 @@ const HistoryTab = () => {
     }, []);
 
     const handleSelectDate = async (dateStr: string) => {
+        if (selectedDate === dateStr) {
+            setSelectedDate(null);
+            return;
+        }
         setSelectedDate(dateStr);
         setDetailLoading(true);
         try {
@@ -138,9 +144,13 @@ const HistoryTab = () => {
             {/* 달력 */}
             <div style={styles.calendarCard}>
                 <div style={styles.calendarHeader}>
-                    <button style={styles.navArrow} onClick={() => moveMonth(-1)}>‹</button>
+                    <button style={styles.navArrow} onClick={() => moveMonth(-1)} aria-label="이전 달">
+                        <ChevronLeft size={18} strokeWidth={2} />
+                    </button>
                     <span style={styles.calendarTitle}>{viewYear}년 {viewMonth}월</span>
-                    <button style={styles.navArrow} onClick={() => moveMonth(1)}>›</button>
+                    <button style={styles.navArrow} onClick={() => moveMonth(1)} aria-label="다음 달">
+                        <ChevronRight size={18} strokeWidth={2} />
+                    </button>
                 </div>
 
                 <div style={styles.weekdayRow}>
@@ -166,7 +176,7 @@ const HistoryTab = () => {
                                 onClick={() => handleSelectDate(dateStr)}
                             >
                                 <span>{day}</span>
-                                {hasStudy && <span style={styles.dayDot} />}
+                                {hasStudy && <span style={{ ...styles.dayDot, background: isSelected ? color.onAccent : color.accent }} />}
                             </button>
                         );
                     })}
@@ -194,12 +204,15 @@ const HistoryTab = () => {
                                 </div>
                                 {(notesBySession[s.sessionId] || []).map((note, j) => (
                                     <div key={j} style={styles.noteRow}>
-                                        <span>
-                                            {note.logType === 'APP' ? '💻' : '🌐'} {note.logValue}
+                                        <span style={styles.noteRowLine}>
+                                            {note.logType === 'APP'
+                                                ? <Monitor size={13} strokeWidth={1.75} color={color.inkTertiary} />
+                                                : <Globe size={13} strokeWidth={1.75} color={color.inkTertiary} />}
+                                            {note.logValue}
                                             <span style={{
-                                                marginLeft: '6px', fontSize: '11px',
-                                                color: note.category === 'STUDY' ? '#1976d2'
-                                                    : note.category === 'DISTRACT' ? '#e53935' : '#999'
+                                                fontSize: '11px', fontWeight: 600,
+                                                color: note.category === 'STUDY' ? color.accent
+                                                    : note.category === 'DISTRACT' ? color.distract : color.neutral
                                             }}>
                                                 {note.category === 'STUDY' ? '공부'
                                                     : note.category === 'DISTRACT' ? '딴짓' : '중립'}
@@ -260,67 +273,63 @@ const HistoryTab = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     calendarCard: {
-        background: 'white', borderRadius: '12px', padding: '16px',
-        marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.md,
+        padding: '16px', marginBottom: '20px',
     },
     calendarHeader: {
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: '12px'
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px',
     },
-    calendarTitle: { fontSize: '15px', fontWeight: 'bold' },
+    calendarTitle: { fontSize: '15px', fontWeight: 700, color: color.ink },
     navArrow: {
-        background: 'none', border: 'none', fontSize: '20px',
-        color: '#1976d2', cursor: 'pointer', padding: '4px 12px'
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'none', border: 'none', borderRadius: radius.sm,
+        color: color.inkSecondary, cursor: 'pointer', padding: '6px',
     },
     weekdayRow: { display: 'flex' },
     weekdayLabel: {
-        flex: 1, textAlign: 'center', fontSize: '12px',
-        color: '#999', padding: '4px 0'
+        flex: 1, textAlign: 'center', fontSize: '12px', color: color.inkTertiary, padding: '4px 0',
     },
     dayGrid: { display: 'flex', flexWrap: 'wrap' },
     dayCell: { width: `${100 / 7}%`, aspectRatio: '1', boxSizing: 'border-box' },
     dayButton: {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        gap: '3px', background: 'none', border: 'none', borderRadius: '8px',
-        cursor: 'pointer', fontSize: '13px', color: '#333'
+        gap: '3px', background: 'none', border: 'none', borderRadius: radius.sm,
+        cursor: 'pointer', fontSize: '13px', color: color.ink,
     },
-    daySelected: { background: '#1976d2', color: 'white' },
-    dayDot: {
-        width: '5px', height: '5px', borderRadius: '50%', background: '#1976d2'
-    },
+    daySelected: { background: color.accent, color: color.onAccent },
+    dayDot: { width: '5px', height: '5px', borderRadius: '50%' },
     detailSection: { marginBottom: '20px' },
-    sectionTitle: { fontSize: '15px', fontWeight: 'bold', marginBottom: '12px', color: '#333' },
-    empty: { color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' },
+    sectionTitle: { fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: color.ink },
+    empty: { color: color.inkTertiary, fontSize: '14px', textAlign: 'center', padding: '20px' },
     sessionDetailCard: {
-        background: 'white', borderRadius: '10px', padding: '14px',
-        marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.md,
+        padding: '14px', marginBottom: '8px',
     },
     sessionDetailHeader: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        fontSize: '13px', color: '#666', marginBottom: '8px'
+        fontSize: '13px', color: color.inkSecondary, marginBottom: '8px',
     },
-    sessionDetailStudy: { color: '#1976d2', fontWeight: 'bold', fontSize: '13px' },
-    noteRow: {
-        padding: '6px 0', borderTop: '1px solid #f5f5f5', fontSize: '13px'
-    },
-    noteMemo: { margin: '4px 0 0', fontSize: '12px', color: '#888' },
+    sessionDetailStudy: { color: color.accent, fontWeight: 700, fontSize: '13px' },
+    noteRow: { padding: '6px 0', borderTop: `1px solid ${color.surfaceMuted}`, fontSize: '13px' },
+    noteRowLine: { display: 'flex', alignItems: 'center', gap: '6px', color: color.ink },
+    noteMemo: { margin: '4px 0 0', fontSize: '12px', color: color.inkTertiary },
     summarySection: { marginBottom: '20px' },
     tabRow: { display: 'flex', gap: '8px', marginBottom: '12px' },
     tab: {
-        flex: 1, padding: '8px', background: '#f5f5f5', color: '#666',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px'
+        flex: 1, padding: '8px', background: color.surfaceMuted, color: color.inkSecondary,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '13px', fontWeight: 500,
     },
     tabSelected: {
-        flex: 1, padding: '8px', background: '#1976d2', color: 'white',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '13px'
+        flex: 1, padding: '8px', background: color.accent, color: color.onAccent,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '13px', fontWeight: 600,
     },
     summaryDayCard: {
-        background: 'white', borderRadius: '10px', padding: '14px',
-        marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.md,
+        padding: '14px', marginBottom: '8px',
     },
     summaryDayHeader: {
-        display: 'flex', justifyContent: 'space-between',
-        fontSize: '13px', fontWeight: 'bold', marginBottom: '6px'
+        display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700,
+        marginBottom: '6px', color: color.ink,
     },
 };
 

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { LogSummaryItem, LogNoteItem } from '../types';
 import { getLogSummary, finalizeSession } from '../api/session';
+import { color, radius, shadow } from '../theme';
+import { Monitor, Globe, X } from 'lucide-react';
 
 interface Props {
     sessionId: number;
     onComplete: () => void;
+    onCancel: () => void;
 }
 
 const formatTime = (sec: number): string => {
@@ -20,13 +23,13 @@ const categoryLabel: { [key: string]: string } = {
     NEUTRAL: '중립',
 };
 
-const categoryColor: { [key: string]: React.CSSProperties } = {
-    STUDY: { background: '#1976d2', color: 'white' },
-    DISTRACT: { background: '#e53935', color: 'white' },
-    NEUTRAL: { background: '#9e9e9e', color: 'white' },
+const categoryStyle: { [key: string]: React.CSSProperties } = {
+    STUDY: { background: color.accent, color: color.onAccent },
+    DISTRACT: { background: color.distract, color: color.onAccent },
+    NEUTRAL: { background: color.neutral, color: color.onAccent },
 };
 
-const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
+const SessionFinalizeModal = ({ sessionId, onComplete, onCancel }: Props) => {
     const [items, setItems] = useState<LogSummaryItem[]>([]);
     const [notes, setNotes] = useState<LogNoteItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -35,6 +38,15 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
 
     useEffect(() => {
         fetchLogSummary();
+    }, []);
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onCancel();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchLogSummary = async () => {
@@ -92,7 +104,7 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
         return (
             <div style={styles.overlay}>
                 <div style={styles.modal}>
-                    <p style={{ textAlign: 'center', color: '#666' }}>로딩 중...</p>
+                    <p style={{ textAlign: 'center', color: color.inkTertiary }}>로딩 중...</p>
                 </div>
             </div>
         );
@@ -101,25 +113,29 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
     return (
         <div style={styles.overlay}>
             <div style={styles.modal}>
-                <h3 style={styles.title}>세션 완료</h3>
-                <p style={styles.subtitle}>
-                    각 앱/사이트를 어떻게 사용했는지 선택해주세요.
-                </p>
+                <div style={styles.header}>
+                    <div>
+                        <h3 style={styles.title}>세션 완료</h3>
+                        <p style={styles.subtitle}>각 앱/사이트를 어떻게 사용했는지 선택해주세요.</p>
+                    </div>
+                    <button style={styles.closeBtn} onClick={onCancel} aria-label="나중에 입력하기">
+                        <X size={18} strokeWidth={1.75} />
+                    </button>
+                </div>
 
                 <div style={styles.list}>
                     {items.map((item, i) => (
                         <div key={i} style={styles.item}>
                             <div style={styles.itemHeader}>
                                 <span style={styles.itemIcon}>
-                                    {item.logType === 'APP' ? '💻' : '🌐'}
+                                    {item.logType === 'APP'
+                                        ? <Monitor size={15} strokeWidth={1.75} color={color.inkTertiary} />
+                                        : <Globe size={15} strokeWidth={1.75} color={color.inkTertiary} />}
                                 </span>
                                 <span style={styles.itemValue}>{item.logValue}</span>
-                                <span style={styles.itemTime}>
-                                    {formatTime(item.totalSec)}
-                                </span>
+                                <span style={styles.itemTime}>{formatTime(item.totalSec)}</span>
                             </div>
 
-                            {/* 카테고리 선택 버튼 */}
                             <div style={styles.categoryRow}>
                                 {(['STUDY', 'DISTRACT', 'NEUTRAL'] as const).map(cat => (
                                     <button
@@ -127,8 +143,8 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
                                         style={{
                                             ...styles.categoryBtn,
                                             ...(notes[i]?.category === cat
-                                                ? categoryColor[cat]
-                                                : { background: '#f5f5f5', color: '#666' })
+                                                ? categoryStyle[cat]
+                                                : { background: color.surfaceMuted, color: color.inkSecondary })
                                         }}
                                         onClick={() => updateCategory(i, cat)}
                                     >
@@ -137,14 +153,13 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
                                 ))}
                             </div>
 
-                            {/* 메모 입력 (공부일 때만) */}
                             {notes[i]?.category === 'STUDY' && (
                                 <div style={styles.memoWrapper}>
                                     <input
                                         style={{
                                             ...styles.memoInput,
                                             borderColor: notes[i]?.memo && notes[i].memo!.trim().length >= 5
-                                                ? '#1976d2' : '#ddd'
+                                                ? color.accent : color.border
                                         }}
                                         placeholder="어떤 공부를 했나요? (5자 이상)"
                                         value={notes[i]?.memo || ''}
@@ -163,17 +178,22 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
 
                 {error && <p style={styles.error}>{error}</p>}
 
-                <button
-                    style={{
-                        ...styles.submitBtn,
-                        opacity: isValid ? 1 : 0.4,
-                        cursor: isValid ? 'pointer' : 'not-allowed',
-                    }}
-                    onClick={handleSubmit}
-                    disabled={!isValid || submitting}
-                >
-                    {submitting ? '저장 중...' : '완료'}
-                </button>
+                <div style={styles.footerRow}>
+                    <button style={styles.laterBtn} onClick={onCancel}>
+                        나중에 입력
+                    </button>
+                    <button
+                        style={{
+                            ...styles.submitBtn,
+                            opacity: isValid ? 1 : 0.4,
+                            cursor: isValid ? 'pointer' : 'not-allowed',
+                        }}
+                        onClick={handleSubmit}
+                        disabled={!isValid || submitting}
+                    >
+                        {submitting ? '저장 중...' : '완료'}
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -181,48 +201,59 @@ const SessionFinalizeModal = ({ sessionId, onComplete }: Props) => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     overlay: {
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        position: 'fixed', inset: 0, background: 'rgba(28,27,24,0.4)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 200, padding: '16px',
     },
     modal: {
-        background: 'white', borderRadius: '16px', padding: '24px',
+        background: color.surface, borderRadius: radius.lg, padding: '24px',
         width: '100%', maxWidth: '480px',
         maxHeight: '80vh', overflowY: 'auto',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+        boxShadow: shadow.float,
     },
-    title: { margin: '0 0 4px', fontSize: '18px', fontWeight: 'bold' },
-    subtitle: { margin: '0 0 20px', fontSize: '13px', color: '#888' },
+    header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '20px' },
+    title: { margin: '0 0 4px', fontSize: '18px', fontWeight: 700, color: color.ink },
+    subtitle: { margin: 0, fontSize: '13px', color: color.inkTertiary },
+    closeBtn: {
+        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        width: '28px', height: '28px', border: 'none', borderRadius: radius.sm,
+        background: color.surfaceMuted, color: color.inkSecondary, cursor: 'pointer',
+    },
     list: { display: 'flex', flexDirection: 'column', gap: '16px' },
     item: {
-        background: '#f9f9f9', borderRadius: '10px', padding: '12px',
+        background: color.surfaceMuted, borderRadius: radius.md, padding: '12px',
     },
     itemHeader: {
         display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px',
     },
-    itemIcon: { fontSize: '16px' },
-    itemValue: { flex: 1, fontSize: '14px', fontWeight: 'bold' },
-    itemTime: { fontSize: '13px', color: '#888' },
+    itemIcon: { display: 'flex', alignItems: 'center' },
+    itemValue: { flex: 1, fontSize: '14px', fontWeight: 600, color: color.ink },
+    itemTime: { fontSize: '13px', color: color.inkTertiary },
     categoryRow: { display: 'flex', gap: '6px', marginBottom: '8px' },
     categoryBtn: {
-        flex: 1, padding: '7px', border: 'none', borderRadius: '6px',
-        cursor: 'pointer', fontSize: '13px', fontWeight: 'bold',
-        transition: 'all 0.15s',
+        flex: 1, padding: '7px', border: 'none', borderRadius: radius.sm,
+        cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+        transition: 'background 0.15s, color 0.15s',
     },
     memoWrapper: { marginTop: '6px' },
     memoInput: {
         width: '100%', padding: '8px 10px',
-        border: '1.5px solid #ddd', borderRadius: '6px',
+        border: '1.5px solid', borderRadius: radius.sm,
         fontSize: '13px', boxSizing: 'border-box',
-        outline: 'none',
+        outline: 'none', background: color.surface, color: color.ink,
     },
-    memoError: { margin: '4px 0 0', fontSize: '11px', color: '#e53935' },
-    error: { color: '#e53935', fontSize: '13px', margin: '12px 0 0' },
+    memoError: { margin: '4px 0 0', fontSize: '11px', color: color.distract },
+    error: { color: color.distract, fontSize: '13px', margin: '12px 0 0' },
+    footerRow: { display: 'flex', gap: '8px', marginTop: '20px' },
+    laterBtn: {
+        padding: '14px 16px', background: color.surfaceMuted, color: color.inkSecondary,
+        border: 'none', borderRadius: radius.md, fontSize: '14px', cursor: 'pointer',
+    },
     submitBtn: {
-        width: '100%', padding: '14px', marginTop: '20px',
-        background: '#1976d2', color: 'white',
-        border: 'none', borderRadius: '10px',
-        fontSize: '15px', fontWeight: 'bold',
+        flex: 1, padding: '14px',
+        background: color.accent, color: color.onAccent,
+        border: 'none', borderRadius: radius.md,
+        fontSize: '15px', fontWeight: 700,
     },
 };
 

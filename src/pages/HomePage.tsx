@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSession } from '../hooks/useSession';
 import { getTodaySummary } from '../api/stats';
 import { TodaySummary } from '../types';
 import SessionFinalizeModal from '../components/SessionFinalizeModal';
+import AppShell from '../components/AppShell';
+import { color, radius, shadow } from '../theme';
+import {
+    Play, Pause, Plus, Square, Monitor, Globe, StickyNote, X, ChevronRight,
+} from 'lucide-react';
 
 const formatTime = (sec: number): string => {
     const h = Math.floor(sec / 3600);
@@ -15,7 +19,6 @@ const formatTime = (sec: number): string => {
 };
 
 const HomePage = () => {
-    const navigate = useNavigate();
     const {
         session, loading, error, elapsedSec, isPaused,
         handleStart, handleEnd, handlePause, handleResume, handleExtend
@@ -29,7 +32,6 @@ const HomePage = () => {
     const [showStartModal, setShowStartModal] = useState(false);
     const [studyType, setStudyType] = useState<'ONLINE' | 'OFFLINE'>('ONLINE');
     const [targetHour, setTargetHour] = useState(2);
-    const userName = localStorage.getItem('userName') || '사용자';
 
     useEffect(() => {
         fetchSummary();
@@ -50,143 +52,137 @@ const HomePage = () => {
     };
 
     const isActive = session && !session.ended;
+    const recentStudyNotes = (summary?.recentNotes || []).filter(n => n.category === 'STUDY');
 
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
-                <span style={styles.headerTitle}>Study Tracker</span>
-                <div style={styles.headerRight}>
-                    <span style={styles.userName}>{userName}</span>
-                    <button style={styles.navBtn} onClick={() => navigate('/stats')}>
-                        통계
-                    </button>
-                    <button style={styles.navBtn} onClick={() => navigate('/classifications')}>
-                        설정
-                    </button>
-                    <button style={styles.logoutBtn} onClick={() => {
-                        localStorage.clear();
-                        navigate('/login');
-                    }}>
-                        로그아웃
-                    </button>
-                </div>
-            </div>
-
-            <div style={styles.summaryCard}>
-                <p style={styles.summaryLabel}>오늘 순공 시간</p>
-                <h1 style={{ ...styles.summaryTime, cursor: 'pointer' }}
-                    onClick={() => setDetailModal('STUDY')}>
-                    {formatTime(summary?.totalStudySec || 0)}
-                </h1>
-                <div style={styles.summaryRow}>
-                    <div style={{ ...styles.summaryItem, cursor: 'pointer' }}
-                        onClick={() => setDetailModal('DISTRACT')}>
-                        <span style={styles.summaryItemLabel}>딴짓</span>
-                        <span style={{ ...styles.summaryItemValue, color: '#e53935' }}>
-                            {formatTime(summary?.totalDistractSec || 0)}
-                        </span>
-                    </div>
-                    <div style={styles.summaryItem}>
-                        <span style={styles.summaryItemLabel}>세션</span>
-                        <span style={styles.summaryItemValue}>
-                            {summary?.sessionCount || 0}회
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {isActive ? (
-                <div style={styles.sessionCard}>
-                    <p style={styles.sessionLabel}>
-                        {isPaused ? '일시정지 중' : '측정 중'}
-                    </p>
-                    <h2 style={styles.sessionTime}>{formatTime(elapsedSec)}</h2>
-                    {session.targetSec && (
-                        <p style={styles.targetTime}>
-                            목표 {formatTime(session.targetSec)}
-                        </p>
-                    )}
-                    <div style={styles.btnRow}>
-                        {isPaused ? (
-                            <button style={styles.btnResume} onClick={handleResume}>
-                                재개
-                            </button>
-                        ) : (
-                            <button style={styles.btnPause} onClick={handlePause}>
-                                일시정지
-                            </button>
-                        )}
-                        <button style={styles.btnExtend}
-                            onClick={() => handleExtend(1800)}>
-                            +30분
+        <AppShell>
+            <div className="content-grid two-col">
+                {/* 왼쪽: 오늘의 핵심 지표 + 세션 컨트롤 */}
+                <div style={styles.col}>
+                    <div style={styles.heroCard}>
+                        <p style={styles.heroLabel}>오늘 순공 시간</p>
+                        <button style={styles.heroValueBtn} onClick={() => setDetailModal('STUDY')}>
+                            <span style={styles.heroValue}>{formatTime(summary?.totalStudySec || 0)}</span>
+                            <ChevronRight size={20} strokeWidth={1.75} color={color.inkTertiary} />
                         </button>
-                        <button style={styles.btnEnd} onClick={async () => {
-                            await handleEnd();
-                            if (session) {
-                                setFinalizedSessionId(session.sessionId);
-                                setShowFinalizeModal(true);
-                            }
-                        }}>
-                            종료
-                        </button>
-                    </div>
-                </div>
-            ) : (
-                <button style={styles.startBtn}
-                    onClick={() => setShowStartModal(true)}>
-                    공부 시작
-                </button>
-            )}
-
-            {summary && summary.topDistracts.length > 0 && (
-                <div style={styles.distractCard}>
-                    <p style={styles.distractTitle}>오늘 딴짓 TOP</p>
-                    {summary.topDistracts.map((item, i) => (
-                        <div key={i} style={styles.distractItem}>
-                            <span>{item.name}</span>
-                            <span style={{ color: '#e53935' }}>
-                                {formatTime(item.totalSec)}
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {summary && summary.recentNotes.filter(n => n.category === 'STUDY').length > 0 && (
-                <div style={styles.recentCard}>
-                    <p style={styles.recentTitle}>📝 최근 공부 내용</p>
-                    {summary.recentNotes
-                        .filter(n => n.category === 'STUDY')
-                        .map((note, i) => (
-                            <div key={i} style={styles.recentItem}>
-                                <span style={styles.recentIcon}>
-                                    {note.logType === 'APP' ? '💻' : '🌐'}
+                        <div style={styles.heroStatsRow}>
+                            <button style={styles.heroStat} onClick={() => setDetailModal('DISTRACT')}>
+                                <span style={styles.heroStatLabel}>딴짓</span>
+                                <span style={{ ...styles.heroStatValue, color: color.distract }}>
+                                    {formatTime(summary?.totalDistractSec || 0)}
                                 </span>
-                                <div style={styles.recentTextWrap}>
-                                    <span style={styles.recentValue}>{note.logValue}</span>
-                                    <span style={styles.recentMemo}>{note.memo}</span>
-                                </div>
+                            </button>
+                            <div style={styles.heroStatDivider} />
+                            <div style={styles.heroStat}>
+                                <span style={styles.heroStatLabel}>세션</span>
+                                <span style={styles.heroStatValue}>{summary?.sessionCount || 0}회</span>
                             </div>
-                        ))}
+                        </div>
+                    </div>
+
+                    {isActive ? (
+                        <div style={styles.sessionCard}>
+                            <p style={styles.sessionLabel}>{isPaused ? '일시정지 중' : '측정 중'}</p>
+                            <h2 style={styles.sessionTime}>{formatTime(elapsedSec)}</h2>
+                            {session.targetSec && (
+                                <p style={styles.targetTime}>목표 {formatTime(session.targetSec)}</p>
+                            )}
+                            <div style={styles.btnRow}>
+                                {isPaused ? (
+                                    <button style={styles.btnResume} onClick={handleResume}>
+                                        <Play size={15} strokeWidth={2} /> 재개
+                                    </button>
+                                ) : (
+                                    <button style={styles.btnPause} onClick={handlePause}>
+                                        <Pause size={15} strokeWidth={2} /> 일시정지
+                                    </button>
+                                )}
+                                <button style={styles.btnExtend} onClick={() => handleExtend(1800)}>
+                                    <Plus size={15} strokeWidth={2} /> 30분
+                                </button>
+                                <button style={styles.btnEnd} onClick={async () => {
+                                    await handleEnd();
+                                    if (session) {
+                                        setFinalizedSessionId(session.sessionId);
+                                        setShowFinalizeModal(true);
+                                    }
+                                }}>
+                                    <Square size={13} strokeWidth={2} /> 종료
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <button style={styles.startBtn} onClick={() => setShowStartModal(true)}>
+                            <Play size={18} strokeWidth={2} fill={color.onAccent} />
+                            공부 시작
+                        </button>
+                    )}
                 </div>
-            )}
+
+                {/* 오른쪽: 딴짓 TOP + 최근 공부 내용 */}
+                <div style={styles.col}>
+                    {summary && summary.topDistracts.length > 0 && (
+                        <div style={styles.panelCard}>
+                            <p style={styles.panelTitle}>오늘 딴짓 TOP</p>
+                            {summary.topDistracts.map((item, i) => (
+                                <div key={i} style={styles.distractItem}>
+                                    <span style={styles.distractName}>{item.name}</span>
+                                    <span style={{ color: color.distract, fontWeight: 600, fontSize: '13px' }}>
+                                        {formatTime(item.totalSec)}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {recentStudyNotes.length > 0 && (
+                        <div style={styles.panelCard}>
+                            <p style={styles.panelTitle}>
+                                <StickyNote size={15} strokeWidth={1.75} /> 최근 공부 내용
+                            </p>
+                            {recentStudyNotes.map((note, i) => (
+                                <div key={i} style={styles.recentItem}>
+                                    <span style={styles.recentIcon}>
+                                        {note.logType === 'APP'
+                                            ? <Monitor size={15} strokeWidth={1.75} color={color.inkTertiary} />
+                                            : <Globe size={15} strokeWidth={1.75} color={color.inkTertiary} />}
+                                    </span>
+                                    <div style={styles.recentTextWrap}>
+                                        <span style={styles.recentValue}>{note.logValue}</span>
+                                        <span style={styles.recentMemo}>{note.memo}</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!summary?.topDistracts.length && !recentStudyNotes.length && (
+                        <div style={styles.emptyPanel}>
+                            <p style={styles.empty}>공부를 시작하면 오늘의 기록이 여기에 쌓여요.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {showStartModal && (
-                <div style={styles.modalOverlay}>
-                    <div style={styles.modal}>
-                        <h3 style={{ margin: '0 0 16px' }}>공부 시작</h3>
+                <div style={styles.modalOverlay} onClick={() => setShowStartModal(false)}>
+                    <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                        <div style={styles.modalHeader}>
+                            <h3 style={styles.modalTitle}>공부 시작</h3>
+                            <button style={styles.modalCloseIcon} onClick={() => setShowStartModal(false)}>
+                                <X size={18} strokeWidth={1.75} />
+                            </button>
+                        </div>
 
                         <p style={styles.modalLabel}>공부 유형</p>
                         <div style={styles.typeRow}>
                             <button
-                                style={studyType === 'ONLINE'
-                                    ? styles.typeSelected : styles.typeBtn}
+                                style={studyType === 'ONLINE' ? styles.typeSelected : styles.typeBtn}
                                 onClick={() => setStudyType('ONLINE')}>
                                 온라인
                             </button>
                             <button
-                                style={studyType === 'OFFLINE'
-                                    ? styles.typeSelected : styles.typeBtn}
+                                style={studyType === 'OFFLINE' ? styles.typeSelected : styles.typeBtn}
                                 onClick={() => setStudyType('OFFLINE')}>
                                 오프라인
                             </button>
@@ -197,8 +193,7 @@ const HomePage = () => {
                             {[1, 2, 3, 4].map(h => (
                                 <button
                                     key={h}
-                                    style={targetHour === h
-                                        ? styles.typeSelected : styles.typeBtn}
+                                    style={targetHour === h ? styles.typeSelected : styles.typeBtn}
                                     onClick={() => setTargetHour(h)}>
                                     {h}시간
                                 </button>
@@ -208,13 +203,10 @@ const HomePage = () => {
                         {error && <p style={styles.error}>{error}</p>}
 
                         <div style={styles.modalBtnRow}>
-                            <button style={styles.modalCancel}
-                                onClick={() => setShowStartModal(false)}>
+                            <button style={styles.modalCancel} onClick={() => setShowStartModal(false)}>
                                 취소
                             </button>
-                            <button style={styles.modalStart}
-                                onClick={handleStartSession}
-                                disabled={loading}>
+                            <button style={styles.modalStart} onClick={handleStartSession} disabled={loading}>
                                 시작
                             </button>
                         </div>
@@ -225,18 +217,22 @@ const HomePage = () => {
             {detailModal && (
                 <div style={styles.modalOverlay} onClick={() => setDetailModal(null)}>
                     <div style={styles.modal} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ margin: '0 0 16px' }}>
-                            {detailModal === 'STUDY' ? '공부 상세' : '딴짓 상세'}
-                        </h3>
-                        {(detailModal === 'STUDY' ? summary?.studyDetails : summary?.distractDetails)
-                            ?.length ? (
+                        <div style={styles.modalHeader}>
+                            <h3 style={styles.modalTitle}>
+                                {detailModal === 'STUDY' ? '공부 상세' : '딴짓 상세'}
+                            </h3>
+                            <button style={styles.modalCloseIcon} onClick={() => setDetailModal(null)}>
+                                <X size={18} strokeWidth={1.75} />
+                            </button>
+                        </div>
+                        {(detailModal === 'STUDY' ? summary?.studyDetails : summary?.distractDetails)?.length ? (
                             (detailModal === 'STUDY' ? summary!.studyDetails : summary!.distractDetails)
                                 .map((item, i) => (
                                     <div key={i} style={styles.detailItem}>
                                         <span>{item.name}</span>
                                         <span style={{
-                                            fontWeight: 'bold',
-                                            color: detailModal === 'STUDY' ? '#1976d2' : '#e53935'
+                                            fontWeight: 600,
+                                            color: detailModal === 'STUDY' ? color.accent : color.distract
                                         }}>
                                             {formatTime(item.totalSec)}
                                         </span>
@@ -245,10 +241,6 @@ const HomePage = () => {
                         ) : (
                             <p style={styles.empty}>기록이 없어요</p>
                         )}
-                        <button style={styles.detailCloseBtn}
-                            onClick={() => setDetailModal(null)}>
-                            닫기
-                        </button>
                     </div>
                 </div>
             )}
@@ -261,129 +253,145 @@ const HomePage = () => {
                         setFinalizedSessionId(null);
                         fetchSummary();
                     }}
+                    onCancel={() => {
+                        setShowFinalizeModal(false);
+                        setFinalizedSessionId(null);
+                        fetchSummary();
+                    }}
                 />
             )}
-
-        </div>
+        </AppShell>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
-    container: { maxWidth: '480px', margin: '0 auto', padding: '0 16px 40px' },
-    header: {
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 0', borderBottom: '1px solid #eee', marginBottom: '20px'
+    col: { display: 'flex', flexDirection: 'column', gap: '16px' },
+
+    heroCard: {
+        background: color.surface, border: `1px solid ${color.border}`,
+        borderRadius: radius.lg, padding: '28px',
     },
-    headerTitle: { fontSize: '18px', fontWeight: 'bold' },
-    headerRight: { display: 'flex', alignItems: 'center', gap: '8px' },
-    userName: { fontSize: '13px', color: '#666' },
-    navBtn: {
-        padding: '6px 12px', background: '#e3f2fd', color: '#1976d2',
-        border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px'
+    heroLabel: { margin: '0 0 10px', fontSize: '13px', color: color.inkTertiary, fontWeight: 500 },
+    heroValueBtn: {
+        display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none',
+        cursor: 'pointer', padding: 0, marginBottom: '20px',
     },
-    logoutBtn: {
-        padding: '6px 12px', background: '#f5f5f5', color: '#666',
-        border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px'
+    heroValue: {
+        fontSize: '48px', fontWeight: 700, color: color.ink, letterSpacing: '-0.02em',
+        fontVariantNumeric: 'tabular-nums', lineHeight: 1,
     },
-    summaryCard: {
-        background: '#1976d2', color: 'white', borderRadius: '16px',
-        padding: '28px', marginBottom: '16px', textAlign: 'center'
+    heroStatsRow: { display: 'flex', alignItems: 'center', gap: '20px' },
+    heroStat: {
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px',
+        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
     },
-    summaryLabel: { margin: '0 0 8px', fontSize: '14px', opacity: 0.8 },
-    summaryTime: { margin: '0 0 16px', fontSize: '42px', fontWeight: 'bold' },
-    summaryRow: { display: 'flex', justifyContent: 'center', gap: '32px' },
-    summaryItem: { display: 'flex', flexDirection: 'column', alignItems: 'center' },
-    summaryItemLabel: { fontSize: '12px', opacity: 0.8 },
-    summaryItemValue: { fontSize: '16px', fontWeight: 'bold', color: 'white' },
+    heroStatDivider: { width: '1px', height: '28px', background: color.border },
+    heroStatLabel: { fontSize: '12px', color: color.inkTertiary },
+    heroStatValue: { fontSize: '15px', fontWeight: 700, color: color.ink },
+
     sessionCard: {
-        background: 'white', borderRadius: '16px', padding: '24px',
-        marginBottom: '16px', textAlign: 'center',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.lg,
+        padding: '24px', textAlign: 'center',
     },
-    sessionLabel: { margin: '0 0 8px', fontSize: '13px', color: '#666' },
-    sessionTime: { margin: '0 0 4px', fontSize: '36px', fontWeight: 'bold' },
-    targetTime: { margin: '0 0 16px', fontSize: '13px', color: '#999' },
+    sessionLabel: { margin: '0 0 8px', fontSize: '13px', color: color.inkTertiary, fontWeight: 500 },
+    sessionTime: {
+        margin: '0 0 4px', fontSize: '34px', fontWeight: 700, color: color.ink,
+        fontVariantNumeric: 'tabular-nums',
+    },
+    targetTime: { margin: '0 0 16px', fontSize: '13px', color: color.inkTertiary },
     btnRow: { display: 'flex', gap: '8px', justifyContent: 'center' },
     btnPause: {
-        padding: '10px 20px', background: '#fff3e0', color: '#e65100',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '10px 16px', background: color.surfaceMuted, color: color.ink,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '13px', fontWeight: 500,
     },
     btnResume: {
-        padding: '10px 20px', background: '#e8f5e9', color: '#2e7d32',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '10px 16px', background: color.positiveSoft, color: color.positive,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '13px', fontWeight: 500,
     },
     btnExtend: {
-        padding: '10px 20px', background: '#e3f2fd', color: '#1565c0',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '10px 16px', background: color.accentSoft, color: color.accentStrong,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '13px', fontWeight: 500,
     },
     btnEnd: {
-        padding: '10px 20px', background: '#ffebee', color: '#c62828',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '10px 16px', background: color.distractSoft, color: color.distract,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '13px', fontWeight: 500,
     },
     startBtn: {
-        width: '100%', padding: '18px', background: '#1976d2', color: 'white',
-        border: 'none', borderRadius: '12px', fontSize: '18px',
-        cursor: 'pointer', marginBottom: '16px'
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+        width: '100%', padding: '18px', background: color.accent, color: color.onAccent,
+        border: 'none', borderRadius: radius.lg, fontSize: '16px', fontWeight: 600, cursor: 'pointer',
     },
-    distractCard: {
-        background: 'white', borderRadius: '12px', padding: '16px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+
+    panelCard: {
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.md,
+        padding: '18px',
     },
-    distractTitle: { margin: '0 0 12px', fontSize: '14px', fontWeight: 'bold' },
+    panelTitle: {
+        display: 'flex', alignItems: 'center', gap: '6px',
+        margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: color.ink,
+    },
     distractItem: {
-        display: 'flex', justifyContent: 'space-between',
-        padding: '8px 0', borderBottom: '1px solid #f5f5f5', fontSize: '14px'
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '9px 0', borderBottom: `1px solid ${color.surfaceMuted}`, fontSize: '13px',
     },
+    distractName: { color: color.ink },
+    recentItem: {
+        display: 'flex', alignItems: 'flex-start', gap: '10px',
+        padding: '9px 0', borderBottom: `1px solid ${color.surfaceMuted}`,
+    },
+    recentIcon: { display: 'flex', alignItems: 'center', paddingTop: '2px' },
+    recentTextWrap: { display: 'flex', flexDirection: 'column', gap: '2px' },
+    recentValue: { fontSize: '13px', fontWeight: 600, color: color.ink },
+    recentMemo: { fontSize: '13px', color: color.inkSecondary },
+    emptyPanel: {
+        background: color.surfaceMuted, border: `1px dashed ${color.borderStrong}`,
+        borderRadius: radius.md, padding: '24px',
+    },
+
     modalOverlay: {
-        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
+        position: 'fixed', inset: 0, background: 'rgba(28,27,24,0.35)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '16px',
     },
     modal: {
-        background: 'white', borderRadius: '16px', padding: '24px',
-        width: '320px', boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+        background: color.surface, borderRadius: radius.lg, padding: '24px',
+        width: '320px', maxWidth: '100%', boxShadow: shadow.float,
     },
-    modalLabel: { margin: '0 0 8px', fontSize: '13px', color: '#666' },
+    modalHeader: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' },
+    modalTitle: { margin: 0, fontSize: '16px', fontWeight: 700, color: color.ink },
+    modalCloseIcon: {
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: '28px', height: '28px', border: 'none', borderRadius: radius.sm,
+        background: 'none', color: color.inkTertiary, cursor: 'pointer',
+    },
+    modalLabel: { margin: '0 0 8px', fontSize: '13px', color: color.inkSecondary },
     typeRow: { display: 'flex', gap: '8px', marginBottom: '16px' },
     typeBtn: {
-        flex: 1, padding: '10px', background: '#f5f5f5', color: '#333',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        flex: 1, padding: '10px', background: color.surfaceMuted, color: color.ink,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px',
     },
     typeSelected: {
-        flex: 1, padding: '10px', background: '#1976d2', color: 'white',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        flex: 1, padding: '10px', background: color.accent, color: color.onAccent,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px', fontWeight: 600,
     },
     modalBtnRow: { display: 'flex', gap: '8px', marginTop: '16px' },
     modalCancel: {
-        flex: 1, padding: '12px', background: '#f5f5f5', color: '#333',
-        border: 'none', borderRadius: '8px', cursor: 'pointer'
-    },
-    detailCloseBtn: {
-        width: '100%', padding: '12px', background: '#f5f5f5', color: '#333',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', marginTop: '16px'
+        flex: 1, padding: '12px', background: color.surfaceMuted, color: color.ink,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px',
     },
     modalStart: {
-        flex: 1, padding: '12px', background: '#1976d2', color: 'white',
-        border: 'none', borderRadius: '8px', cursor: 'pointer'
+        flex: 1, padding: '12px', background: color.accent, color: color.onAccent,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px', fontWeight: 600,
     },
-    error: { color: '#e53935', fontSize: '13px', margin: '8px 0' },
-    recentCard: {
-        background: 'white', borderRadius: '12px', padding: '16px',
-        marginTop: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-    },
-    recentTitle: { margin: '0 0 12px', fontSize: '14px', fontWeight: 'bold' },
-    recentItem: {
-        display: 'flex', alignItems: 'flex-start', gap: '8px',
-        padding: '8px 0', borderBottom: '1px solid #f5f5f5'
-    },
-    recentIcon: { fontSize: '16px' },
-    recentTextWrap: { display: 'flex', flexDirection: 'column', gap: '2px' },
-    recentValue: { fontSize: '13px', fontWeight: 'bold', color: '#333' },
-    recentMemo: { fontSize: '13px', color: '#666' },
+    error: { color: color.distract, fontSize: '13px', margin: '8px 0' },
     detailItem: {
         display: 'flex', justifyContent: 'space-between',
-        padding: '10px 0', borderBottom: '1px solid #f5f5f5', fontSize: '14px'
+        padding: '10px 0', borderBottom: `1px solid ${color.surfaceMuted}`, fontSize: '14px',
     },
-    empty: { color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' },
+    empty: { color: color.inkTertiary, fontSize: '14px', textAlign: 'center', padding: '8px 0' },
 };
 
 export default HomePage;

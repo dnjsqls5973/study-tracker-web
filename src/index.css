@@ -1,13 +1,106 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  background: #F6F4EF;
+  color: #1C1B18;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Pretendard', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+  box-sizing: border-box;
+}
+
+button, input, select {
+  font-family: inherit;
+}
+
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid #4B47B0;
+  outline-offset: 2px;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* ---- App shell: 데스크톱은 좌측 고정 사이드바, 모바일은 상단 바 ---- */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.shell-sidebar {
+  display: none;
+}
+
+.shell-topbar {
+  display: flex;
+}
+
+.shell-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.shell-content {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+@media (min-width: 900px) {
+  .shell-sidebar {
+    display: flex;
+  }
+
+  .shell-topbar {
+    display: none;
+  }
+
+  .shell-content {
+    padding: 40px 40px 56px;
+  }
+}
+
+/* ---- 콘텐츠 그리드: 넓은 화면에서만 2열 ---- */
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .content-grid.two-col {
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+  }
+}
+
+/* ---- 로그인: 데스크톱에서 좌우 분할 ---- */
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-brand {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .login-shell {
+    flex-direction: row;
+  }
+
+  .login-brand {
+    display: flex;
+  }
 }

@@ -1,6 +1,5 @@
 // src/pages/StatsPage.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, Legend
@@ -9,6 +8,9 @@ import { getWeeklyStats, getMonthlyStats, getSessions } from '../api/stats';
 import { getSessionNotes } from '../api/session';
 import { DailyStat, Session, LogNote } from '../types';
 import HistoryTab from '../components/HistoryTab';
+import AppShell from '../components/AppShell';
+import { color, radius } from '../theme';
+import { Monitor, BookOpen, ChevronDown, ChevronUp, Globe } from 'lucide-react';
 
 const formatTime = (sec: number): string => {
     const h = Math.floor(sec / 3600);
@@ -23,7 +25,6 @@ const formatDate = (dateStr: string): string => {
 };
 
 const StatsPage = () => {
-    const navigate = useNavigate();
     const [tab, setTab] = useState<'weekly' | 'monthly' | 'history'>('weekly');
     const [weeklyStats, setWeeklyStats] = useState<DailyStat[]>([]);
     const [monthlyStats, setMonthlyStats] = useState<DailyStat[]>([]);
@@ -39,20 +40,20 @@ const StatsPage = () => {
     }, []);
 
     const fetchWeekly = async () => {
-    try {
-        const today = new Date();
-        const day = today.getDay(); // 0(일) ~ 6(토)
-        const diffToMonday = day === 0 ? -6 : 1 - day; // 일요일이면 6일 전 월요일
-        const monday = new Date(today);
-        monday.setDate(today.getDate() + diffToMonday);
-        const startDate = monday.toISOString().slice(0, 10);
-        const data = await getWeeklyStats(startDate);
-        setWeeklyStats(data);
-    } catch (e) {
-        console.error('주간 통계 조회 실패', e);
-        setWeeklyStats([]);
-    }
-};
+        try {
+            const today = new Date();
+            const day = today.getDay(); // 0(일) ~ 6(토)
+            const diffToMonday = day === 0 ? -6 : 1 - day; // 일요일이면 6일 전 월요일
+            const monday = new Date(today);
+            monday.setDate(today.getDate() + diffToMonday);
+            const startDate = monday.toISOString().slice(0, 10);
+            const data = await getWeeklyStats(startDate);
+            setWeeklyStats(data);
+        } catch (e) {
+            console.error('주간 통계 조회 실패', e);
+            setWeeklyStats([]);
+        }
+    };
 
     const fetchMonthly = async () => {
         try {
@@ -105,17 +106,11 @@ const StatsPage = () => {
         .reduce((acc, s) => acc + s.totalStudySec, 0);
 
     return (
-        <div style={styles.container}>
-            {/* 헤더 */}
+        <AppShell>
             <div style={styles.header}>
-                <button style={styles.backBtn} onClick={() => navigate('/')}>
-                    ← 홈
-                </button>
                 <span style={styles.headerTitle}>통계</span>
-                <div style={{ width: '60px' }} />
             </div>
 
-            {/* 탭 */}
             <div style={styles.tabRow}>
                 <button
                     style={tab === 'weekly' ? styles.tabSelected : styles.tab}
@@ -138,7 +133,6 @@ const StatsPage = () => {
                 <HistoryTab />
             ) : (
                 <>
-                    {/* 총 순공 시간 */}
                     <div style={styles.totalCard}>
                         <p style={styles.totalLabel}>
                             {tab === 'weekly' ? '이번 주' : '이번 달'} 총 순공
@@ -146,22 +140,20 @@ const StatsPage = () => {
                         <h2 style={styles.totalTime}>{formatTime(totalStudy)}</h2>
                     </div>
 
-                    {/* 막대 차트 */}
                     <div style={styles.chartCard}>
                         <ResponsiveContainer width="100%" height={220}>
                             <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                                <YAxis tick={{ fontSize: 11 }} unit="분" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={color.surfaceMuted} />
+                                <XAxis dataKey="date" tick={{ fontSize: 11, fill: color.inkTertiary }} />
+                                <YAxis tick={{ fontSize: 11, fill: color.inkTertiary }} unit="분" />
                                 <Tooltip formatter={(v: any) => `${v}분`} />
                                 <Legend />
-                                <Bar dataKey="순공" fill="#1976d2" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="딴짓" fill="#ef5350" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="순공" fill={color.accent} radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="딴짓" fill={color.distract} radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
 
-                    {/* 오늘 세션 목록 */}
                     <div style={styles.sectionTitle}>오늘 세션</div>
                     {todaySessions.length === 0 ? (
                         <p style={styles.empty}>오늘 세션이 없어요</p>
@@ -174,7 +166,10 @@ const StatsPage = () => {
                                     <div style={styles.sessionItemRow}>
                                         <div style={styles.sessionLeft}>
                                             <span style={styles.sessionType}>
-                                                {s.studyType === 'ONLINE' ? '💻' : '📖'} {s.studyType}
+                                                {s.studyType === 'ONLINE'
+                                                    ? <Monitor size={13} strokeWidth={1.75} />
+                                                    : <BookOpen size={13} strokeWidth={1.75} />}
+                                                {s.studyType}
                                             </span>
                                             <span style={styles.sessionTime}>
                                                 {new Date(s.startedAt).toLocaleTimeString('ko-KR', {
@@ -195,7 +190,11 @@ const StatsPage = () => {
                                                 </span>
                                             )}
                                         </div>
-                                        <span style={styles.expandArrow}>{isExpanded ? '▲' : '▼'}</span>
+                                        <span style={styles.expandArrow}>
+                                            {isExpanded
+                                                ? <ChevronUp size={16} strokeWidth={1.75} />
+                                                : <ChevronDown size={16} strokeWidth={1.75} />}
+                                        </span>
                                     </div>
 
                                     {isExpanded && (
@@ -207,12 +206,15 @@ const StatsPage = () => {
                                             ) : (
                                                 sessionNotes[s.sessionId].map((note, j) => (
                                                     <div key={j} style={styles.noteRow}>
-                                                        <span>
-                                                            {note.logType === 'APP' ? '💻' : '🌐'} {note.logValue}
+                                                        <span style={styles.noteRowLine}>
+                                                            {note.logType === 'APP'
+                                                                ? <Monitor size={13} strokeWidth={1.75} color={color.inkTertiary} />
+                                                                : <Globe size={13} strokeWidth={1.75} color={color.inkTertiary} />}
+                                                            {note.logValue}
                                                             <span style={{
-                                                                marginLeft: '6px', fontSize: '11px',
-                                                                color: note.category === 'STUDY' ? '#1976d2'
-                                                                    : note.category === 'DISTRACT' ? '#e53935' : '#999'
+                                                                fontSize: '11px', fontWeight: 600,
+                                                                color: note.category === 'STUDY' ? color.accent
+                                                                    : note.category === 'DISTRACT' ? color.distract : color.neutral
                                                             }}>
                                                                 {note.category === 'STUDY' ? '공부'
                                                                     : note.category === 'DISTRACT' ? '딴짓' : '중립'}
@@ -230,63 +232,52 @@ const StatsPage = () => {
                     )}
                 </>
             )}
-        </div>
+        </AppShell>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
-    container: { maxWidth: '480px', margin: '0 auto', padding: '0 16px 40px' },
-    header: {
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 0', borderBottom: '1px solid #eee', marginBottom: '20px'
-    },
-    headerTitle: { fontSize: '18px', fontWeight: 'bold' },
-    backBtn: {
-        padding: '6px 12px', background: 'none', border: 'none',
-        color: '#1976d2', cursor: 'pointer', fontSize: '14px'
-    },
-    tabRow: {
-        display: 'flex', gap: '8px', marginBottom: '16px'
-    },
+    header: { marginBottom: '20px' },
+    headerTitle: { fontSize: '20px', fontWeight: 700, color: color.ink },
+    tabRow: { display: 'flex', gap: '8px', marginBottom: '16px' },
     tab: {
-        flex: 1, padding: '10px', background: '#f5f5f5', color: '#666',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        flex: 1, padding: '10px', background: color.surfaceMuted, color: color.inkSecondary,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px', fontWeight: 500,
     },
     tabSelected: {
-        flex: 1, padding: '10px', background: '#1976d2', color: 'white',
-        border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '14px'
+        flex: 1, padding: '10px', background: color.accent, color: color.onAccent,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px', fontWeight: 600,
     },
     totalCard: {
-        background: '#e3f2fd', borderRadius: '12px', padding: '20px',
-        marginBottom: '16px', textAlign: 'center'
+        background: color.accentSoft, borderRadius: radius.md, padding: '20px',
+        marginBottom: '16px', textAlign: 'center',
     },
-    totalLabel: { margin: '0 0 8px', fontSize: '13px', color: '#666' },
-    totalTime: { margin: 0, fontSize: '32px', fontWeight: 'bold', color: '#1976d2' },
+    totalLabel: { margin: '0 0 8px', fontSize: '13px', color: color.inkSecondary },
+    totalTime: { margin: 0, fontSize: '30px', fontWeight: 700, color: color.accentStrong },
     chartCard: {
-        background: 'white', borderRadius: '12px', padding: '16px',
-        marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.md,
+        padding: '16px', marginBottom: '20px',
     },
-    sectionTitle: {
-        fontSize: '15px', fontWeight: 'bold', marginBottom: '12px', color: '#333'
-    },
-    empty: { color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' },
+    sectionTitle: { fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: color.ink },
+    empty: { color: color.inkTertiary, fontSize: '14px', textAlign: 'center', padding: '20px' },
     sessionItem: {
-        background: 'white', borderRadius: '10px', padding: '14px 16px',
-        marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', cursor: 'pointer'
+        background: color.surface, border: `1px solid ${color.border}`, borderRadius: radius.md,
+        padding: '14px 16px', marginBottom: '8px', cursor: 'pointer',
     },
     sessionItemRow: {
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px'
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px',
     },
     sessionLeft: { display: 'flex', flexDirection: 'column', gap: '4px' },
-    sessionType: { fontSize: '13px', fontWeight: 'bold' },
-    sessionTime: { fontSize: '12px', color: '#888' },
+    sessionType: { display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', fontWeight: 600, color: color.ink },
+    sessionTime: { fontSize: '12px', color: color.inkTertiary },
     sessionRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' },
-    sessionStudy: { fontSize: '13px', color: '#1976d2', fontWeight: 'bold' },
-    sessionDistract: { fontSize: '12px', color: '#e53935' },
-    expandArrow: { fontSize: '11px', color: '#bbb' },
-    noteList: { marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0', cursor: 'default' },
+    sessionStudy: { fontSize: '13px', color: color.accent, fontWeight: 700 },
+    sessionDistract: { fontSize: '12px', color: color.distract },
+    expandArrow: { display: 'flex', color: color.inkTertiary },
+    noteList: { marginTop: '10px', paddingTop: '10px', borderTop: `1px solid ${color.surfaceMuted}`, cursor: 'default' },
     noteRow: { padding: '6px 0', fontSize: '13px' },
-    noteMemo: { margin: '4px 0 0', fontSize: '12px', color: '#888' },
+    noteRowLine: { display: 'flex', alignItems: 'center', gap: '6px', color: color.ink },
+    noteMemo: { margin: '4px 0 0', fontSize: '12px', color: color.inkTertiary },
 };
 
 export default StatsPage;
