@@ -23,6 +23,7 @@ const HomePage = () => {
 
     const [showFinalizeModal, setShowFinalizeModal] = useState(false);
     const [finalizedSessionId, setFinalizedSessionId] = useState<number | null>(null);
+    const [detailModal, setDetailModal] = useState<'STUDY' | 'DISTRACT' | null>(null);
 
     const [summary, setSummary] = useState<TodaySummary | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
@@ -73,11 +74,13 @@ const HomePage = () => {
 
             <div style={styles.summaryCard}>
                 <p style={styles.summaryLabel}>오늘 순공 시간</p>
-                <h1 style={styles.summaryTime}>
+                <h1 style={{ ...styles.summaryTime, cursor: 'pointer' }}
+                    onClick={() => setDetailModal('STUDY')}>
                     {formatTime(summary?.totalStudySec || 0)}
                 </h1>
                 <div style={styles.summaryRow}>
-                    <div style={styles.summaryItem}>
+                    <div style={{ ...styles.summaryItem, cursor: 'pointer' }}
+                        onClick={() => setDetailModal('DISTRACT')}>
                         <span style={styles.summaryItemLabel}>딴짓</span>
                         <span style={{ ...styles.summaryItemValue, color: '#e53935' }}>
                             {formatTime(summary?.totalDistractSec || 0)}
@@ -149,6 +152,25 @@ const HomePage = () => {
                 </div>
             )}
 
+            {summary && summary.recentNotes.filter(n => n.category === 'STUDY').length > 0 && (
+                <div style={styles.recentCard}>
+                    <p style={styles.recentTitle}>📝 최근 공부 내용</p>
+                    {summary.recentNotes
+                        .filter(n => n.category === 'STUDY')
+                        .map((note, i) => (
+                            <div key={i} style={styles.recentItem}>
+                                <span style={styles.recentIcon}>
+                                    {note.logType === 'APP' ? '💻' : '🌐'}
+                                </span>
+                                <div style={styles.recentTextWrap}>
+                                    <span style={styles.recentValue}>{note.logValue}</span>
+                                    <span style={styles.recentMemo}>{note.memo}</span>
+                                </div>
+                            </div>
+                        ))}
+                </div>
+            )}
+
             {showStartModal && (
                 <div style={styles.modalOverlay}>
                     <div style={styles.modal}>
@@ -196,6 +218,37 @@ const HomePage = () => {
                                 시작
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {detailModal && (
+                <div style={styles.modalOverlay} onClick={() => setDetailModal(null)}>
+                    <div style={styles.modal} onClick={e => e.stopPropagation()}>
+                        <h3 style={{ margin: '0 0 16px' }}>
+                            {detailModal === 'STUDY' ? '공부 상세' : '딴짓 상세'}
+                        </h3>
+                        {(detailModal === 'STUDY' ? summary?.studyDetails : summary?.distractDetails)
+                            ?.length ? (
+                            (detailModal === 'STUDY' ? summary!.studyDetails : summary!.distractDetails)
+                                .map((item, i) => (
+                                    <div key={i} style={styles.detailItem}>
+                                        <span>{item.name}</span>
+                                        <span style={{
+                                            fontWeight: 'bold',
+                                            color: detailModal === 'STUDY' ? '#1976d2' : '#e53935'
+                                        }}>
+                                            {formatTime(item.totalSec)}
+                                        </span>
+                                    </div>
+                                ))
+                        ) : (
+                            <p style={styles.empty}>기록이 없어요</p>
+                        )}
+                        <button style={styles.detailCloseBtn}
+                            onClick={() => setDetailModal(null)}>
+                            닫기
+                        </button>
                     </div>
                 </div>
             )}
@@ -304,11 +357,33 @@ const styles: { [key: string]: React.CSSProperties } = {
         flex: 1, padding: '12px', background: '#f5f5f5', color: '#333',
         border: 'none', borderRadius: '8px', cursor: 'pointer'
     },
+    detailCloseBtn: {
+        width: '100%', padding: '12px', background: '#f5f5f5', color: '#333',
+        border: 'none', borderRadius: '8px', cursor: 'pointer', marginTop: '16px'
+    },
     modalStart: {
         flex: 1, padding: '12px', background: '#1976d2', color: 'white',
         border: 'none', borderRadius: '8px', cursor: 'pointer'
     },
     error: { color: '#e53935', fontSize: '13px', margin: '8px 0' },
+    recentCard: {
+        background: 'white', borderRadius: '12px', padding: '16px',
+        marginTop: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+    },
+    recentTitle: { margin: '0 0 12px', fontSize: '14px', fontWeight: 'bold' },
+    recentItem: {
+        display: 'flex', alignItems: 'flex-start', gap: '8px',
+        padding: '8px 0', borderBottom: '1px solid #f5f5f5'
+    },
+    recentIcon: { fontSize: '16px' },
+    recentTextWrap: { display: 'flex', flexDirection: 'column', gap: '2px' },
+    recentValue: { fontSize: '13px', fontWeight: 'bold', color: '#333' },
+    recentMemo: { fontSize: '13px', color: '#666' },
+    detailItem: {
+        display: 'flex', justifyContent: 'space-between',
+        padding: '10px 0', borderBottom: '1px solid #f5f5f5', fontSize: '14px'
+    },
+    empty: { color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' },
 };
 
 export default HomePage;

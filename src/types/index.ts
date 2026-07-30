@@ -18,6 +18,9 @@ export interface TodaySummary {
     totalDistractSec: number;
     sessionCount: number;
     topDistracts: DistractItem[];
+    recentNotes: LogNote[];
+    studyDetails: DistractItem[];
+    distractDetails: DistractItem[];
 }
 
 export interface DistractItem {
@@ -56,4 +59,33 @@ export interface LogNoteItem {
     logValue: string;
     category: string;
     memo: string | null;
+}
+
+export interface LogNote {
+    id: number;
+    logType: string;
+    logValue: string;
+    category: string;
+    memo: string | null;
+}
+
+// 달력용 월별 순공 시간: { "2026-07-15": 21600, ... }
+export type CalendarData = Record<string, number>;
+
+export interface StudyNoteItem {
+    logValue: string;
+    category: string;
+    memo: string | null;
+}
+
+export interface SessionNoteGroup {
+    sessionId: number;
+    studyType: string;
+    notes: StudyNoteItem[];
+}
+
+export interface NoteDailySummary {
+    date: string;
+    totalStudySec: number;
+    sessions: SessionNoteGroup[];
 }

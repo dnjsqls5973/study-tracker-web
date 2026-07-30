@@ -6,7 +6,9 @@ import {
     Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import { getWeeklyStats, getMonthlyStats, getSessions } from '../api/stats';
-import { DailyStat, Session } from '../types';
+import { getSessionNotes } from '../api/session';
+import { DailyStat, Session, LogNote } from '../types';
+import HistoryTab from '../components/HistoryTab';
 
 const formatTime = (sec: number): string => {
     const h = Math.floor(sec / 3600);
@@ -22,10 +24,13 @@ const formatDate = (dateStr: string): string => {
 
 const StatsPage = () => {
     const navigate = useNavigate();
-    const [tab, setTab] = useState<'weekly' | 'monthly'>('weekly');
+    const [tab, setTab] = useState<'weekly' | 'monthly' | 'history'>('weekly');
     const [weeklyStats, setWeeklyStats] = useState<DailyStat[]>([]);
     const [monthlyStats, setMonthlyStats] = useState<DailyStat[]>([]);
     const [todaySessions, setTodaySessions] = useState<Session[]>([]);
+    const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
+    const [sessionNotes, setSessionNotes] = useState<{ [sessionId: number]: LogNote[] }>({});
+    const [notesLoading, setNotesLoading] = useState(false);
 
     useEffect(() => {
         fetchWeekly();
@@ -71,6 +76,25 @@ const StatsPage = () => {
         }
     };
 
+    const toggleSession = async (sessionId: number) => {
+        if (expandedSessionId === sessionId) {
+            setExpandedSessionId(null);
+            return;
+        }
+        setExpandedSessionId(sessionId);
+        if (!sessionNotes[sessionId]) {
+            setNotesLoading(true);
+            try {
+                const notes = await getSessionNotes(sessionId);
+                setSessionNotes(prev => ({ ...prev, [sessionId]: notes }));
+            } catch (e) {
+                console.error('세션 노트 조회 실패', e);
+            } finally {
+                setNotesLoading(false);
+            }
+        }
+    };
+
     const chartData = (tab === 'weekly' ? weeklyStats : monthlyStats).map(s => ({
         date: formatDate(s.date),
         순공: Math.round(s.totalStudySec / 60),
@@ -103,63 +127,108 @@ const StatsPage = () => {
                     onClick={() => setTab('monthly')}>
                     월간
                 </button>
+                <button
+                    style={tab === 'history' ? styles.tabSelected : styles.tab}
+                    onClick={() => setTab('history')}>
+                    히스토리
+                </button>
             </div>
 
-            {/* 총 순공 시간 */}
-            <div style={styles.totalCard}>
-                <p style={styles.totalLabel}>
-                    {tab === 'weekly' ? '이번 주' : '이번 달'} 총 순공
-                </p>
-                <h2 style={styles.totalTime}>{formatTime(totalStudy)}</h2>
-            </div>
-
-            {/* 막대 차트 */}
-            <div style={styles.chartCard}>
-                <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} unit="분" />
-                        <Tooltip formatter={(v: any) => `${v}분`} />
-                        <Legend />
-                        <Bar dataKey="순공" fill="#1976d2" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="딴짓" fill="#ef5350" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </div>
-
-            {/* 오늘 세션 목록 */}
-            <div style={styles.sectionTitle}>오늘 세션</div>
-            {todaySessions.length === 0 ? (
-                <p style={styles.empty}>오늘 세션이 없어요</p>
+            {tab === 'history' ? (
+                <HistoryTab />
             ) : (
-                todaySessions.map((s, i) => (
-                    <div key={i} style={styles.sessionItem}>
-                        <div style={styles.sessionLeft}>
-                            <span style={styles.sessionType}>
-                                {s.studyType === 'ONLINE' ? '💻' : '📖'} {s.studyType}
-                            </span>
-                            <span style={styles.sessionTime}>
-                                {new Date(s.startedAt).toLocaleTimeString('ko-KR', {
-                                    hour: '2-digit', minute: '2-digit'
-                                })}
-                                {s.endedAt && ` ~ ${new Date(s.endedAt).toLocaleTimeString('ko-KR', {
-                                    hour: '2-digit', minute: '2-digit'
-                                })}`}
-                            </span>
-                        </div>
-                        <div style={styles.sessionRight}>
-                            <span style={styles.sessionStudy}>
-                                순공 {formatTime(s.studySec)}
-                            </span>
-                            {s.distractSec > 0 && (
-                                <span style={styles.sessionDistract}>
-                                    딴짓 {formatTime(s.distractSec)}
-                                </span>
-                            )}
-                        </div>
+                <>
+                    {/* 총 순공 시간 */}
+                    <div style={styles.totalCard}>
+                        <p style={styles.totalLabel}>
+                            {tab === 'weekly' ? '이번 주' : '이번 달'} 총 순공
+                        </p>
+                        <h2 style={styles.totalTime}>{formatTime(totalStudy)}</h2>
                     </div>
-                ))
+
+                    {/* 막대 차트 */}
+                    <div style={styles.chartCard}>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                                <YAxis tick={{ fontSize: 11 }} unit="분" />
+                                <Tooltip formatter={(v: any) => `${v}분`} />
+                                <Legend />
+                                <Bar dataKey="순공" fill="#1976d2" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="딴짓" fill="#ef5350" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    {/* 오늘 세션 목록 */}
+                    <div style={styles.sectionTitle}>오늘 세션</div>
+                    {todaySessions.length === 0 ? (
+                        <p style={styles.empty}>오늘 세션이 없어요</p>
+                    ) : (
+                        todaySessions.map((s, i) => {
+                            const isExpanded = expandedSessionId === s.sessionId;
+                            return (
+                                <div key={i} style={styles.sessionItem}
+                                    onClick={() => toggleSession(s.sessionId)}>
+                                    <div style={styles.sessionItemRow}>
+                                        <div style={styles.sessionLeft}>
+                                            <span style={styles.sessionType}>
+                                                {s.studyType === 'ONLINE' ? '💻' : '📖'} {s.studyType}
+                                            </span>
+                                            <span style={styles.sessionTime}>
+                                                {new Date(s.startedAt).toLocaleTimeString('ko-KR', {
+                                                    hour: '2-digit', minute: '2-digit'
+                                                })}
+                                                {s.endedAt && ` ~ ${new Date(s.endedAt).toLocaleTimeString('ko-KR', {
+                                                    hour: '2-digit', minute: '2-digit'
+                                                })}`}
+                                            </span>
+                                        </div>
+                                        <div style={styles.sessionRight}>
+                                            <span style={styles.sessionStudy}>
+                                                순공 {formatTime(s.studySec)}
+                                            </span>
+                                            {s.distractSec > 0 && (
+                                                <span style={styles.sessionDistract}>
+                                                    딴짓 {formatTime(s.distractSec)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span style={styles.expandArrow}>{isExpanded ? '▲' : '▼'}</span>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div style={styles.noteList} onClick={e => e.stopPropagation()}>
+                                            {notesLoading && !sessionNotes[s.sessionId] ? (
+                                                <p style={styles.empty}>불러오는 중...</p>
+                                            ) : (sessionNotes[s.sessionId] || []).length === 0 ? (
+                                                <p style={styles.empty}>기록된 노트가 없어요</p>
+                                            ) : (
+                                                sessionNotes[s.sessionId].map((note, j) => (
+                                                    <div key={j} style={styles.noteRow}>
+                                                        <span>
+                                                            {note.logType === 'APP' ? '💻' : '🌐'} {note.logValue}
+                                                            <span style={{
+                                                                marginLeft: '6px', fontSize: '11px',
+                                                                color: note.category === 'STUDY' ? '#1976d2'
+                                                                    : note.category === 'DISTRACT' ? '#e53935' : '#999'
+                                                            }}>
+                                                                {note.category === 'STUDY' ? '공부'
+                                                                    : note.category === 'DISTRACT' ? '딴짓' : '중립'}
+                                                            </span>
+                                                        </span>
+                                                        {note.memo && <p style={styles.noteMemo}>"{note.memo}"</p>}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </>
             )}
         </div>
     );
@@ -202,9 +271,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     empty: { color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' },
     sessionItem: {
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         background: 'white', borderRadius: '10px', padding: '14px 16px',
-        marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
+        marginBottom: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', cursor: 'pointer'
+    },
+    sessionItemRow: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px'
     },
     sessionLeft: { display: 'flex', flexDirection: 'column', gap: '4px' },
     sessionType: { fontSize: '13px', fontWeight: 'bold' },
@@ -212,6 +283,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     sessionRight: { display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' },
     sessionStudy: { fontSize: '13px', color: '#1976d2', fontWeight: 'bold' },
     sessionDistract: { fontSize: '12px', color: '#e53935' },
+    expandArrow: { fontSize: '11px', color: '#bbb' },
+    noteList: { marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #f0f0f0', cursor: 'default' },
+    noteRow: { padding: '6px 0', fontSize: '13px' },
+    noteMemo: { margin: '4px 0 0', fontSize: '12px', color: '#888' },
 };
 
 export default StatsPage;

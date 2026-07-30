@@ -1,6 +1,6 @@
 // src/api/session.ts
 import client from './client';
-import { Session } from '../types';
+import { Session, LogNote } from '../types';
 
 export const startSession = async (
     studyType: string, targetSec?: number
@@ -42,6 +42,11 @@ export const extendSession = async (
 
 export const getActiveSession = async (): Promise<Session> => {
     const response = await client.get('/api/sessions/active');
+    return response.data;
+};
+
+export const getSessionNotes = async (sessionId: number): Promise<LogNote[]> => {
+    const response = await client.get(`/api/sessions/${sessionId}/notes`);
     return response.data;
 };
 
