@@ -2,6 +2,16 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Environment Variables
+
+Before running or building the app, create a `.env.local` file (gitignored) in the project root based on `.env.example`:
+
+```
+REACT_APP_GOOGLE_CLIENT_ID=your_google_oauth_web_client_id.apps.googleusercontent.com
+```
+
+- `REACT_APP_GOOGLE_CLIENT_ID` — the Google OAuth 2.0 web client ID from Google Cloud Console. Required for the Google login button on the login page to work; since Create React App inlines env vars at build time, a missing value means production builds silently ship without a usable login button.
+
 ## Available Scripts
 
 In the project directory, you can run:

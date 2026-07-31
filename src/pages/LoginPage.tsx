@@ -16,6 +16,7 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const buttonRef = useRef<HTMLDivElement>(null);
     const [scriptLoadFailed, setScriptLoadFailed] = useState(false);
+    const [configMissing, setConfigMissing] = useState(false);
 
     // handleGoogleLogin/navigate are read through refs so the init effect
     // below can safely run only once (`[]` deps) without going stale.
@@ -32,6 +33,16 @@ const LoginPage = () => {
     }, [handleGoogleLogin, navigate]);
 
     useEffect(() => {
+        // CRA inlines REACT_APP_* vars at build time. If this build shipped
+        // without REACT_APP_GOOGLE_CLIENT_ID set, GIS would otherwise be
+        // initialized with client_id: undefined, log only to the console,
+        // and render nothing — leaving the user staring at an empty card
+        // with no indication anything is wrong. Surface it instead.
+        if (!GOOGLE_CLIENT_ID) {
+            setConfigMissing(true);
+            return;
+        }
+
         let cancelled = false;
         let intervalId: number | undefined;
 
@@ -103,6 +114,9 @@ const LoginPage = () => {
                     <p style={styles.subtitle}>Google 계정으로 로그인해주세요.</p>
 
                     <div ref={buttonRef} />
+                    {configMissing && (
+                        <p style={styles.error}>Google 로그인 설정에 문제가 있어요. 관리자에게 문의해주세요.</p>
+                    )}
                     {scriptLoadFailed && (
                         <p style={styles.error}>Google 로그인을 불러오지 못했어요. 새로고침해주세요.</p>
                     )}
