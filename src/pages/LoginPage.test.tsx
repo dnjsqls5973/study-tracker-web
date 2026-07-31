@@ -2,9 +2,11 @@ import { render, screen, act } from '@testing-library/react';
 import LoginPage from './LoginPage';
 import { useAuth } from '../hooks/useAuth';
 
+const mockNavigate = jest.fn();
+
 jest.mock('../hooks/useAuth');
 jest.mock('react-router-dom', () => ({
-    useNavigate: () => jest.fn(),
+    useNavigate: () => mockNavigate,
 }));
 
 describe('LoginPage - Google Identity Services 초기화', () => {
@@ -13,6 +15,7 @@ describe('LoginPage - Google Identity Services 초기화', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockNavigate.mockClear();
         window.google = undefined;
         mockUseAuth.mockReturnValue({ handleGoogleLogin: jest.fn(), error: null });
     });
@@ -70,5 +73,46 @@ describe('LoginPage - Google Identity Services 초기화', () => {
         expect(
             screen.getByText('Google 로그인을 불러오지 못했어요. 새로고침해주세요.').textContent
         ).toBe('Google 로그인을 불러오지 못했어요. 새로고침해주세요.');
+    });
+
+    it('Google 자격 증명 콜백이 호출되면 로그인 처리 후 홈으로 이동한다', async () => {
+        const handleGoogleLogin = jest.fn().mockResolvedValue(true);
+        mockUseAuth.mockReturnValue({ handleGoogleLogin, error: null });
+
+        const initialize = jest.fn();
+        const renderButton = jest.fn();
+        window.google = { accounts: { id: { initialize, renderButton } } };
+
+        render(<LoginPage />);
+
+        expect(initialize).toHaveBeenCalledTimes(1);
+        const config = initialize.mock.calls[0][0];
+
+        await act(async () => {
+            await config.callback({ credential: 'fake-id-token' });
+        });
+
+        expect(handleGoogleLogin).toHaveBeenCalledWith('fake-id-token');
+        expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+
+    it('로그인 처리가 실패하면 홈으로 이동하지 않는다', async () => {
+        const handleGoogleLogin = jest.fn().mockResolvedValue(false);
+        mockUseAuth.mockReturnValue({ handleGoogleLogin, error: null });
+
+        const initialize = jest.fn();
+        const renderButton = jest.fn();
+        window.google = { accounts: { id: { initialize, renderButton } } };
+
+        render(<LoginPage />);
+
+        const config = initialize.mock.calls[0][0];
+
+        await act(async () => {
+            await config.callback({ credential: 'fake-id-token' });
+        });
+
+        expect(handleGoogleLogin).toHaveBeenCalledWith('fake-id-token');
+        expect(mockNavigate).not.toHaveBeenCalled();
     });
 });
