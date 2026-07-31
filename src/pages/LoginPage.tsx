@@ -1,29 +1,80 @@
 // src/pages/LoginPage.tsx
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { color } from '../theme';
 import { BookOpen } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID as string;
+// GIS script tag is `async defer`, so window.google is frequently not
+// ready yet at mount time. Poll briefly for it instead of giving up silently.
+const GOOGLE_SCRIPT_POLL_INTERVAL_MS = 100;
+const GOOGLE_SCRIPT_POLL_MAX_ATTEMPTS = 50; // ~5s total
 
 const LoginPage = () => {
     const { handleGoogleLogin, error } = useAuth();
     const navigate = useNavigate();
     const buttonRef = useRef<HTMLDivElement>(null);
+    const [scriptLoadFailed, setScriptLoadFailed] = useState(false);
+
+    // handleGoogleLogin/navigate are read through refs so the init effect
+    // below can safely run only once (`[]` deps) without going stale.
+    // Without this, handleGoogleLogin gets a new reference on every render
+    // (its owning useAuth() call re-renders LoginPage on setLoading(true)),
+    // which would re-run the effect and call renderButton() again into the
+    // same div — GIS appends rather than replaces, so the button would
+    // visibly duplicate after the very first click.
+    const handleGoogleLoginRef = useRef(handleGoogleLogin);
+    const navigateRef = useRef(navigate);
+    useEffect(() => {
+        handleGoogleLoginRef.current = handleGoogleLogin;
+        navigateRef.current = navigate;
+    }, [handleGoogleLogin, navigate]);
 
     useEffect(() => {
-        if (!window.google || !buttonRef.current) return;
+        let cancelled = false;
+        let intervalId: number | undefined;
 
-        window.google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: async (response) => {
-                const success = await handleGoogleLogin(response.credential);
-                if (success) navigate('/');
-            },
-        });
-        window.google.accounts.id.renderButton(buttonRef.current, { theme: 'outline', size: 'large' });
-    }, [handleGoogleLogin, navigate]);
+        const renderGoogleButton = () => {
+            if (cancelled || !buttonRef.current || !window.google) return;
+
+            window.google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: async (response) => {
+                    const success = await handleGoogleLoginRef.current(response.credential);
+                    if (success) navigateRef.current('/');
+                },
+            });
+            window.google.accounts.id.renderButton(buttonRef.current, { theme: 'outline', size: 'large' });
+        };
+
+        if (window.google) {
+            renderGoogleButton();
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        let attempts = 0;
+        intervalId = window.setInterval(() => {
+            if (cancelled) return;
+            if (window.google) {
+                window.clearInterval(intervalId);
+                renderGoogleButton();
+                return;
+            }
+            attempts += 1;
+            if (attempts >= GOOGLE_SCRIPT_POLL_MAX_ATTEMPTS) {
+                window.clearInterval(intervalId);
+                setScriptLoadFailed(true);
+            }
+        }, GOOGLE_SCRIPT_POLL_INTERVAL_MS);
+
+        return () => {
+            cancelled = true;
+            if (intervalId !== undefined) window.clearInterval(intervalId);
+        };
+    }, []);
 
     return (
         <div className="login-shell" style={styles.shell}>
@@ -52,6 +103,9 @@ const LoginPage = () => {
                     <p style={styles.subtitle}>Google 계정으로 로그인해주세요.</p>
 
                     <div ref={buttonRef} />
+                    {scriptLoadFailed && (
+                        <p style={styles.error}>Google 로그인을 불러오지 못했어요. 새로고침해주세요.</p>
+                    )}
                     {error && <p style={styles.error}>{error}</p>}
                 </div>
             </div>
