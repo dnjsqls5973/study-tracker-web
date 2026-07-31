@@ -2,15 +2,8 @@
 import client from './client';
 import { TokenResponse, DeviceTokenResponse } from '../types';
 
-export const login = async (email: string, password: string): Promise<TokenResponse> => {
-    const response = await client.post('/api/auth/login', { email, password });
-    return response.data;
-};
-
-export const register = async (
-    email: string, name: string, password: string
-): Promise<TokenResponse> => {
-    const response = await client.post('/api/auth/register', { email, name, password });
+export const loginWithGoogle = async (idToken: string): Promise<TokenResponse> => {
+    const response = await client.post('/api/auth/google', { idToken });
     return response.data;
 };
 

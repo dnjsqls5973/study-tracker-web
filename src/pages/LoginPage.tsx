@@ -1,28 +1,29 @@
 // src/pages/LoginPage.tsx
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { color, radius } from '../theme';
-import { BookOpen, ArrowRight } from 'lucide-react';
+import { color } from '../theme';
+import { BookOpen } from 'lucide-react';
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID as string;
 
 const LoginPage = () => {
-    const [isRegister, setIsRegister] = useState(false);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [name, setName] = useState('');
-    const { handleLogin, handleRegister, loading, error } = useAuth();
+    const { handleGoogleLogin, error } = useAuth();
     const navigate = useNavigate();
+    const buttonRef = useRef<HTMLDivElement>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        let success = false;
-        if (isRegister) {
-            success = await handleRegister(email, name, password);
-        } else {
-            success = await handleLogin(email, password);
-        }
-        if (success) navigate('/');
-    };
+    useEffect(() => {
+        if (!window.google || !buttonRef.current) return;
+
+        window.google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: async (response) => {
+                const success = await handleGoogleLogin(response.credential);
+                if (success) navigate('/');
+            },
+        });
+        window.google.accounts.id.renderButton(buttonRef.current, { theme: 'outline', size: 'large' });
+    }, [handleGoogleLogin, navigate]);
 
     return (
         <div className="login-shell" style={styles.shell}>
@@ -47,48 +48,11 @@ const LoginPage = () => {
                         <BookOpen size={18} strokeWidth={1.75} color={color.accent} />
                         Study Tracker
                     </p>
-                    <h1 style={styles.title}>{isRegister ? '계정 만들기' : '다시 오셨네요'}</h1>
-                    <p style={styles.subtitle}>
-                        {isRegister ? '몇 가지만 입력하면 바로 시작할 수 있어요.' : '이메일로 로그인해주세요.'}
-                    </p>
+                    <h1 style={styles.title}>다시 오셨네요</h1>
+                    <p style={styles.subtitle}>Google 계정으로 로그인해주세요.</p>
 
-                    <form onSubmit={handleSubmit}>
-                        <input
-                            style={styles.input}
-                            type="email"
-                            placeholder="이메일"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            required
-                        />
-                        {isRegister && (
-                            <input
-                                style={styles.input}
-                                type="text"
-                                placeholder="이름"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                required
-                            />
-                        )}
-                        <input
-                            style={styles.input}
-                            type="password"
-                            placeholder="비밀번호"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                        />
-                        {error && <p style={styles.error}>{error}</p>}
-                        <button style={styles.button} type="submit" disabled={loading}>
-                            {loading ? '처리 중...' : isRegister ? '가입하기' : '로그인'}
-                            {!loading && <ArrowRight size={16} strokeWidth={2} />}
-                        </button>
-                    </form>
-
-                    <button style={styles.toggle} onClick={() => setIsRegister(!isRegister)}>
-                        {isRegister ? '이미 계정이 있어요' : '계정이 없어요'}
-                    </button>
+                    <div ref={buttonRef} />
+                    {error && <p style={styles.error}>{error}</p>}
                 </div>
             </div>
         </div>
@@ -121,22 +85,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     title: { margin: '0 0 6px', fontSize: '24px', fontWeight: 700, color: color.ink, letterSpacing: '-0.01em' },
     subtitle: { margin: '0 0 24px', color: color.inkSecondary, fontSize: '14px' },
-    input: {
-        width: '100%', padding: '12px 14px', marginBottom: '10px',
-        border: `1px solid ${color.border}`, borderRadius: radius.sm,
-        fontSize: '14px', boxSizing: 'border-box', color: color.ink, background: color.surface,
-    },
-    button: {
-        width: '100%', padding: '13px', background: color.accent, color: color.onAccent,
-        border: 'none', borderRadius: radius.sm, fontSize: '15px', fontWeight: 600,
-        cursor: 'pointer', marginTop: '6px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-    },
-    toggle: {
-        width: '100%', padding: '8px', background: 'none', border: 'none',
-        color: color.accent, cursor: 'pointer', marginTop: '16px', fontSize: '13px', fontWeight: 500,
-    },
-    error: { color: color.distract, fontSize: '13px', marginBottom: '8px' },
+    error: { color: color.distract, fontSize: '13px', marginTop: '12px' },
 };
 
 export default LoginPage;
