@@ -7,6 +7,7 @@ import {
 import { getWeeklyStats, getMonthlyStats, getSessions } from '../api/stats';
 import { getSessionNotes } from '../api/session';
 import { DailyStat, Session, LogNote } from '../types';
+import { parseServerDateTime } from '../utils/date';
 import HistoryTab from '../components/HistoryTab';
 import AppShell from '../components/AppShell';
 import { color, radius } from '../theme';
@@ -172,10 +173,10 @@ const StatsPage = () => {
                                                 {s.studyType}
                                             </span>
                                             <span style={styles.sessionTime}>
-                                                {new Date(s.startedAt).toLocaleTimeString('ko-KR', {
+                                                {parseServerDateTime(s.startedAt).toLocaleTimeString('ko-KR', {
                                                     hour: '2-digit', minute: '2-digit'
                                                 })}
-                                                {s.endedAt && ` ~ ${new Date(s.endedAt).toLocaleTimeString('ko-KR', {
+                                                {s.endedAt && ` ~ ${parseServerDateTime(s.endedAt).toLocaleTimeString('ko-KR', {
                                                     hour: '2-digit', minute: '2-digit'
                                                 })}`}
                                             </span>

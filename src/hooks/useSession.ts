@@ -5,6 +5,7 @@ import {
     startSession, endSession, pauseSession,
     resumeSession, extendSession, getActiveSession
 } from '../api/session';
+import { parseServerDateTime } from '../utils/date';
 
 export const useSession = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -25,7 +26,7 @@ export const useSession = () => {
         timerRef.current = setInterval(() => {
             if (isPausedRef.current || !startedAtRef.current) return;
             const total = Math.floor(
-                (Date.now() - new Date(startedAtRef.current).getTime()) / 1000
+                (Date.now() - parseServerDateTime(startedAtRef.current).getTime()) / 1000
             );
             setElapsedSec(total - pausedAccumRef.current);
         }, 1000);
