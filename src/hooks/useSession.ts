@@ -47,6 +47,7 @@ export const useSession = () => {
         return () => {
             if (timerRef.current) clearInterval(timerRef.current);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleStart = async (studyType: string, targetSec?: number) => {

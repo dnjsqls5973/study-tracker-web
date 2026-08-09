@@ -38,6 +38,7 @@ const SessionFinalizeModal = ({ sessionId, onComplete, onCancel }: Props) => {
 
     useEffect(() => {
         fetchLogSummary();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
