@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import StatsPage from './pages/StatsPage';
 import ClassificationPage from './pages/ClassificationPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
     const token = localStorage.getItem('accessToken');
@@ -15,6 +16,7 @@ function App() {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/" element={
                     <PrivateRoute>
                         <HomePage />
