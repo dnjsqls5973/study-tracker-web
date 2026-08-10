@@ -48,7 +48,7 @@ const PrivacyPage = () => (
     <div style={styles.page}>
         <div style={styles.content}>
             <div style={styles.title}>Study Tracker 개인정보처리방침</div>
-            <div style={styles.updated}>최종 업데이트: 2026년 8월 9일</div>
+            <div style={styles.updated}>최종 업데이트: 2026년 8월 11일</div>
 
             <p style={styles.p}>
                 Study Tracker(웹, Windows 에이전트, Chrome 확장 프로그램)는 사용자의 학습/작업 시간을
@@ -73,7 +73,8 @@ const PrivacyPage = () => (
             <div style={styles.h2}>보관 및 제3자 제공</div>
             <p style={styles.p}>
                 수집된 정보는 AWS 서버에 저장되며, 서비스 제공 목적 외에는 사용하지 않습니다.
-                제3자에게 판매하거나 제공하지 않습니다. 계정 삭제를 요청하시면 관련 데이터를 파기합니다.
+                제3자에게 판매하거나 제공하지 않습니다. 이용자는 설정 페이지에서 언제든지
+                계정을 삭제할 수 있으며, 삭제 시 관련 데이터는 즉시 파기됩니다.
             </p>
 
             <div style={styles.h2}>문의</div>

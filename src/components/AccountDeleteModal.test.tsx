@@ -51,4 +51,28 @@ describe('AccountDeleteModal', () => {
 
         expect(onCancel).toHaveBeenCalledTimes(1);
     });
+
+    it('Esc 키를 누르면 onCancel이 호출된다', () => {
+        const onCancel = jest.fn();
+        render(<AccountDeleteModal onCancel={onCancel} />);
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+
+        expect(onCancel).toHaveBeenCalledTimes(1);
+    });
+
+    it('삭제 진행 중에는 Esc 키를 눌러도 닫히지 않는다', async () => {
+        let resolveDelete: () => void = () => {};
+        mockDeleteAccount.mockReturnValue(new Promise<void>((resolve) => { resolveDelete = resolve; }));
+        const onCancel = jest.fn();
+        render(<AccountDeleteModal onCancel={onCancel} />);
+
+        fireEvent.click(screen.getByText('삭제'));
+        await waitFor(() => expect(mockDeleteAccount).toHaveBeenCalledTimes(1));
+
+        fireEvent.keyDown(window, { key: 'Escape' });
+        expect(onCancel).not.toHaveBeenCalled();
+
+        resolveDelete();
+    });
 });

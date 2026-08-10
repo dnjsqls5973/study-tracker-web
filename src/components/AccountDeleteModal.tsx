@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { deleteAccount } from '../api/user';
 import { color, radius, shadow } from '../theme';
@@ -11,6 +11,17 @@ const AccountDeleteModal = ({ onCancel }: Props) => {
     const navigate = useNavigate();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const submittingRef = useRef(submitting);
+    submittingRef.current = submitting;
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !submittingRef.current) onCancel();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleConfirm = async () => {
         setSubmitting(true);
