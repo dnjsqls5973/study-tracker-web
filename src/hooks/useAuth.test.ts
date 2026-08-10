@@ -1,8 +1,10 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAuth } from './useAuth';
 import * as authApi from '../api/auth';
+import * as extensionBridge from '../utils/extensionBridge';
 
 jest.mock('../api/auth');
+jest.mock('../utils/extensionBridge');
 
 describe('useAuth.handleGoogleLogin', () => {
     beforeEach(() => {
@@ -28,6 +30,7 @@ describe('useAuth.handleGoogleLogin', () => {
         expect(success).toBe(true);
         expect(localStorage.getItem('accessToken')).toBe('access-token');
         expect(localStorage.getItem('userName')).toBe('테스트유저');
+        expect(extensionBridge.notifyExtensionOfLogin).toHaveBeenCalledWith('access-token');
     });
 
     it('로그인 실패 시 false를 반환하고 에러 메시지를 설정한다', async () => {

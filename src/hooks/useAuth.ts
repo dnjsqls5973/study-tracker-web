@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { loginWithGoogle } from '../api/auth';
 import { TokenResponse } from '../types';
+import { notifyExtensionOfLogin } from '../utils/extensionBridge';
 
 export const useAuth = () => {
     const [loading, setLoading] = useState(false);
@@ -20,6 +21,7 @@ export const useAuth = () => {
             localStorage.setItem('refreshToken', data.refreshToken);
             localStorage.setItem('userId', String(data.userId));
             localStorage.setItem('userName', data.name);
+            notifyExtensionOfLogin(data.accessToken);
             return true;
         } catch (e: any) {
             setError(e.response?.data?.message || 'Google 로그인에 실패했습니다.');
