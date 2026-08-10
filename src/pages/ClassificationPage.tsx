@@ -7,6 +7,7 @@ import {
 import AppShell from '../components/AppShell';
 import { color, radius } from '../theme';
 import { Globe, Monitor, Trash2 } from 'lucide-react';
+import AccountDeleteModal from '../components/AccountDeleteModal';
 
 const categoryLabel: { [key: string]: string } = {
     STUDY: '공부',
@@ -26,6 +27,7 @@ const ClassificationPage = () => {
     const [value, setValue] = useState('');
     const [category, setCategory] = useState<'STUDY' | 'DISTRACT' | 'NEUTRAL'>('STUDY');
     const [error, setError] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     useEffect(() => {
         fetchList();
@@ -163,6 +165,20 @@ const ClassificationPage = () => {
                     </div>
                 ))
             )}
+
+            <div style={styles.dangerZone}>
+                <div style={styles.dangerTitle}>계정 삭제</div>
+                <p style={styles.dangerDesc}>
+                    계정을 삭제하면 모든 학습 기록이 영구적으로 사라져요.
+                </p>
+                <button style={styles.dangerBtn} onClick={() => setShowDeleteModal(true)}>
+                    계정 삭제
+                </button>
+            </div>
+
+            {showDeleteModal && (
+                <AccountDeleteModal onCancel={() => setShowDeleteModal(false)} />
+            )}
         </AppShell>
     );
 };
@@ -220,6 +236,16 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '6px 8px', background: color.surfaceMuted, color: color.distract,
         border: 'none', borderRadius: radius.sm, cursor: 'pointer',
+    },
+    dangerZone: {
+        marginTop: '32px', paddingTop: '20px', borderTop: `1px solid ${color.border}`,
+    },
+    dangerTitle: { fontSize: '14px', fontWeight: 700, color: color.distract, marginBottom: '4px' },
+    dangerDesc: { fontSize: '13px', color: color.inkTertiary, marginBottom: '12px' },
+    dangerBtn: {
+        padding: '10px 16px', background: 'none', color: color.distract,
+        border: `1px solid ${color.distract}`, borderRadius: radius.sm,
+        fontSize: '13px', fontWeight: 600, cursor: 'pointer',
     },
 };
 
