@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import StatsPage from './pages/StatsPage';
 import ClassificationPage from './pages/ClassificationPage';
 import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import { notifyExtensionOfLogin } from './utils/extensionBridge';
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
@@ -27,6 +28,7 @@ function App() {
             <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/terms" element={<TermsPage />} />
                 <Route path="/" element={
                     <PrivateRoute>
                         <HomePage />

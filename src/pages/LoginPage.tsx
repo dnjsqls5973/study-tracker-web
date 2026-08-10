@@ -99,7 +99,7 @@ const LoginPage = () => {
                         오늘 무엇에<br />집중했는지 기록하세요.
                     </p>
                     <p style={styles.brandSub}>
-                        PC와 브라우저 사용 기록을 자동으로 모아 순공 시간과 딴짓을 정리해드려요.
+                        PC와 브라우저 사용 기록을 자동으로 모아 순공 시간을 정리해드려요.
                     </p>
                 </div>
             </div>
@@ -110,10 +110,13 @@ const LoginPage = () => {
                         <BookOpen size={18} strokeWidth={1.75} color={color.accent} />
                         Study Tracker
                     </p>
-                    <h1 style={styles.title}>다시 오셨네요</h1>
+                    <h1 style={styles.title}>환영합니다</h1>
                     <p style={styles.subtitle}>Google 계정으로 로그인해주세요.</p>
 
                     <div ref={buttonRef} />
+                    <p style={styles.terms}>
+                        로그인 시 <a href="/terms">이용약관</a> 및 <a href="/privacy">개인정보처리방침</a>에 동의합니다.
+                    </p>
                     {configMissing && (
                         <p style={styles.error}>Google 로그인 설정에 문제가 있어요. 관리자에게 문의해주세요.</p>
                     )}
@@ -154,6 +157,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     title: { margin: '0 0 6px', fontSize: '24px', fontWeight: 700, color: color.ink, letterSpacing: '-0.01em' },
     subtitle: { margin: '0 0 24px', color: color.inkSecondary, fontSize: '14px' },
     error: { color: color.distract, fontSize: '13px', marginTop: '12px' },
+    terms: { color: color.inkTertiary, fontSize: '12px', marginTop: '14px', lineHeight: 1.6 },
 };
 
 export default LoginPage;
