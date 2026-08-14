@@ -79,7 +79,6 @@ const SessionFinalizeModal = ({ sessionId, onComplete, onCancel }: Props) => {
         ));
     };
 
-    // 완료 버튼 활성화 조건
     const isValid = notes.every(n => {
         if (n.category === 'STUDY') {
             return n.memo && n.memo.trim().length >= 5;

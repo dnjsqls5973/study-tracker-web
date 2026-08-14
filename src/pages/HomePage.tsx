@@ -57,7 +57,6 @@ const HomePage = () => {
     return (
         <AppShell>
             <div className="content-grid two-col">
-                {/* 왼쪽: 오늘의 핵심 지표 + 세션 컨트롤 */}
                 <div style={styles.col}>
                     <div style={styles.heroCard}>
                         <p style={styles.heroLabel}>오늘 순공 시간</p>
@@ -119,7 +118,6 @@ const HomePage = () => {
                     )}
                 </div>
 
-                {/* 오른쪽: 딴짓 TOP + 최근 공부 내용 */}
                 <div style={styles.col}>
                     {summary && summary.topDistracts.length > 0 && (
                         <div style={styles.panelCard}>

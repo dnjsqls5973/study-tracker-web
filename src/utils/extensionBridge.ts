@@ -12,6 +12,5 @@ export const notifyExtensionOfLogin = (accessToken: string): void => {
             void chromeRuntime.lastError;
         });
     } catch {
-        // 확장 프로그램 미설치/비활성화 등 — 무시
     }
 };

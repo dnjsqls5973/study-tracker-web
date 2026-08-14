@@ -1,4 +1,3 @@
-// src/api/session.ts
 import client from './client';
 import { Session, LogNote } from '../types';
 

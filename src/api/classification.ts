@@ -1,4 +1,3 @@
-// src/api/classification.ts
 import client from './client';
 
 export interface Classification {

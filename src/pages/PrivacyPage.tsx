@@ -1,4 +1,3 @@
-// src/pages/PrivacyPage.tsx
 import { color, font } from '../theme';
 
 const styles: { [key: string]: React.CSSProperties } = {

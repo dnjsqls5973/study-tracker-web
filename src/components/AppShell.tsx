@@ -1,4 +1,3 @@
-// src/components/AppShell.tsx
 import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, BarChart2, SlidersHorizontal, LogOut, BookOpen } from 'lucide-react';
@@ -26,7 +25,6 @@ const AppShell = ({ children }: Props) => {
 
     return (
         <div className="shell">
-            {/* 데스크톱 사이드바 */}
             <aside className="shell-sidebar" style={styles.sidebar}>
                 <div style={styles.brand}>
                     <BookOpen size={20} strokeWidth={1.75} color={color.accent} />
@@ -58,7 +56,6 @@ const AppShell = ({ children }: Props) => {
                 </div>
             </aside>
 
-            {/* 모바일 상단 바 */}
             <header className="shell-topbar" style={styles.topbar}>
                 <div style={styles.brand}>
                     <BookOpen size={18} strokeWidth={1.75} color={color.accent} />

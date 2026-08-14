@@ -1,4 +1,3 @@
-// src/hooks/useAuth.ts
 import { useState } from 'react';
 import { loginWithGoogle } from '../api/auth';
 import { TokenResponse } from '../types';

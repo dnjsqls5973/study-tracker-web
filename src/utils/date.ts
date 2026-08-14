@@ -1,4 +1,3 @@
-// src/utils/date.ts
 const HAS_TIMEZONE = /Z$|[+-]\d{2}:\d{2}$/;
 
 // 백엔드가 LocalDateTime.now()(서버가 UTC라 UTC 시각)를 타임존 표시 없이 내려주므로,

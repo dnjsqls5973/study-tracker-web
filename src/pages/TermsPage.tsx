@@ -1,4 +1,3 @@
-// src/pages/TermsPage.tsx
 import { color, font } from '../theme';
 
 const styles: { [key: string]: React.CSSProperties } = {

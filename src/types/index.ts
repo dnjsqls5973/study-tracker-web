@@ -1,5 +1,3 @@
-// src/types/index.ts
-
 export interface Session {
     sessionId: number;
     studyType: string;

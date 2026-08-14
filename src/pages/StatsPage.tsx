@@ -1,4 +1,3 @@
-// src/pages/StatsPage.tsx
 import { useState, useEffect } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,

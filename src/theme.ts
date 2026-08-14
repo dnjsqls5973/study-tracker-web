@@ -1,15 +1,12 @@
-// src/theme.ts
 // 차분한 생산성(calm productivity) 톤의 디자인 토큰.
 // 색상은 반드시 이 팔레트에서만 가져다 쓴다 — 페이지별로 hex를 새로 짓지 않는다.
 
 export const color = {
-    // 배경
     page: '#F6F4EF',
     surface: '#FFFFFF',
     surfaceMuted: '#F0EEE8',
     sidebar: '#FBFAF7',
 
-    // 테두리
     border: '#E7E2D8',
     borderStrong: '#D9D3C4',
 
@@ -19,20 +16,16 @@ export const color = {
     inkTertiary: '#726C60',
     onAccent: '#FFFFFF',
 
-    // 액센트 — 공부/기본 동작
     accent: '#4B47B0',
     accentSoft: '#EDECF9',
     accentStrong: '#37337F',
 
-    // 딴짓/경고 (차분한 테라코타)
     distract: '#B5573F',
     distractSoft: '#F7E9E4',
 
-    // 중립 카테고리
     neutral: '#8C8676',
     neutralSoft: '#EFEDE6',
 
-    // 긍정/재개
     positive: '#4C7A5D',
     positiveSoft: '#E7F0E9',
 } as const;

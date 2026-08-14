@@ -1,4 +1,3 @@
-// src/api/auth.ts
 import client from './client';
 import { TokenResponse, DeviceTokenResponse } from '../types';
 

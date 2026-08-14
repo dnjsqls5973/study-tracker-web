@@ -1,4 +1,3 @@
-// src/hooks/useSession.ts
 import { useState, useEffect, useRef } from 'react';
 import { Session } from '../types';
 import {
@@ -14,7 +13,7 @@ export const useSession = () => {
     const [elapsedSec, setElapsedSec] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
 
-    const pausedAccumRef = useRef(0);        // 누적 일시정지 시간(초)
+    const pausedAccumRef = useRef(0);
     const pauseStartRef = useRef<Date | null>(null);
     const isPausedRef = useRef(false);        // 타이머 클로저용
     const startedAtRef = useRef<string | null>(null);
@@ -76,7 +75,6 @@ export const useSession = () => {
             const data = await endSession(session.sessionId);
             setSession(data);
             if (timerRef.current) clearInterval(timerRef.current);
-            // 상태 초기화
             isPausedRef.current = false;
             setIsPaused(false);
             pauseStartRef.current = null;
@@ -109,7 +107,7 @@ export const useSession = () => {
         try {
             const data = await resumeSession(session.sessionId, pausedSec);
             setSession(data);
-            pausedAccumRef.current += pausedSec;   // 일시정지 시간 누적
+            pausedAccumRef.current += pausedSec;
             isPausedRef.current = false;
             setIsPaused(false);
             pauseStartRef.current = null;

@@ -1,4 +1,3 @@
-// src/pages/ClassificationPage.tsx
 import { useState, useEffect } from 'react';
 import {
     Classification, getClassifications,

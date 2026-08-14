@@ -127,7 +127,6 @@ const HistoryTab = () => {
         setSelectedDate(null);
     };
 
-    // 달력 그리드 계산
     const firstDay = new Date(viewYear, viewMonth - 1, 1);
     const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
     const startWeekday = firstDay.getDay(); // 0(일)~6(토)
@@ -141,7 +140,6 @@ const HistoryTab = () => {
 
     return (
         <div>
-            {/* 달력 */}
             <div style={styles.calendarCard}>
                 <div style={styles.calendarHeader}>
                     <button style={styles.navArrow} onClick={() => moveMonth(-1)} aria-label="이전 달">
@@ -183,7 +181,6 @@ const HistoryTab = () => {
                 </div>
             </div>
 
-            {/* 선택한 날짜 상세 */}
             {selectedDate && (
                 <div style={styles.detailSection}>
                     <p style={styles.sectionTitle}>{selectedDate}</p>
@@ -227,7 +224,6 @@ const HistoryTab = () => {
                 </div>
             )}
 
-            {/* 주별/월별 요약 */}
             <div style={styles.summarySection}>
                 <div style={styles.tabRow}>
                     <button
