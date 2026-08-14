@@ -13,3 +13,7 @@ export const registerDevice = async (
     const response = await client.post('/api/auth/device', { deviceName, deviceType });
     return response.data;
 };
+
+// REFRESH 토큰으로 새 ACCESS 토큰을 받는 로직은 api/client.ts의 401 응답 인터셉터
+// 안에서 자체적으로 처리한다 (client.ts <-> auth.ts 순환 import를 피하기 위함).
+// 컴포넌트에서 직접 refresh를 트리거할 일은 없어서 여기 별도로 노출하지 않음.

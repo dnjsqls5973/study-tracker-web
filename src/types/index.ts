@@ -47,6 +47,13 @@ export interface DeviceTokenResponse {
     deviceId: number;
 }
 
+export interface UserMe {
+    userId: number;
+    email: string;
+    name: string;
+    dayChangeHour: number;
+}
+
 export interface LogSummaryItem {
     logType: string;    // APP / DOMAIN
     logValue: string;   // idea64.exe / youtube.com

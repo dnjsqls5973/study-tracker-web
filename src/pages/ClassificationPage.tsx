@@ -4,6 +4,7 @@ import {
     Classification, getClassifications,
     createClassification, updateClassification, deleteClassification
 } from '../api/classification';
+import { getMe, updateDayChangeHour } from '../api/user';
 import AppShell from '../components/AppShell';
 import { color, radius } from '../theme';
 import { Globe, Monitor, Trash2 } from 'lucide-react';
@@ -29,9 +30,37 @@ const ClassificationPage = () => {
     const [error, setError] = useState('');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+    const [dayChangeHour, setDayChangeHour] = useState<number | null>(null);
+    const [dayChangeHourSaving, setDayChangeHourSaving] = useState(false);
+    const [dayChangeHourSaved, setDayChangeHourSaved] = useState(false);
+
     useEffect(() => {
         fetchList();
+        fetchMe();
     }, []);
+
+    const fetchMe = async () => {
+        try {
+            const me = await getMe();
+            setDayChangeHour(me.dayChangeHour);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleSaveDayChangeHour = async () => {
+        if (dayChangeHour === null) return;
+        setDayChangeHourSaving(true);
+        setDayChangeHourSaved(false);
+        try {
+            await updateDayChangeHour(dayChangeHour);
+            setDayChangeHourSaved(true);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setDayChangeHourSaving(false);
+        }
+    };
 
     const fetchList = async () => {
         try {
@@ -84,6 +113,40 @@ const ClassificationPage = () => {
             <p style={styles.guide}>
                 특정 앱이나 사이트가 잘못 분류됐다면 여기서 직접 바꿀 수 있어요.
             </p>
+
+            <div style={styles.addCard}>
+                <div style={styles.sectionTitle}>하루 시작 시각</div>
+                <p style={styles.guide}>
+                    새벽까지 이어진 공부도 "오늘" 기록으로 잡히도록, 통계에서 하루가 시작되는 시각을 정할 수 있어요.
+                    (예: 5시로 설정하면 새벽 4시까지 한 공부는 "어제" 기록으로 집계돼요.)
+                </p>
+                {dayChangeHour === null ? (
+                    <p style={styles.empty}>불러오는 중...</p>
+                ) : (
+                    <div style={styles.dayChangeRow}>
+                        <select
+                            style={styles.select}
+                            value={dayChangeHour}
+                            onChange={e => {
+                                setDayChangeHour(Number(e.target.value));
+                                setDayChangeHourSaved(false);
+                            }}
+                        >
+                            {Array.from({ length: 24 }, (_, h) => (
+                                <option key={h} value={h}>{h}시</option>
+                            ))}
+                        </select>
+                        <button
+                            style={styles.saveBtn}
+                            onClick={handleSaveDayChangeHour}
+                            disabled={dayChangeHourSaving}
+                        >
+                            {dayChangeHourSaving ? '저장 중...' : '저장'}
+                        </button>
+                        {dayChangeHourSaved && <span style={styles.savedNotice}>저장됨</span>}
+                    </div>
+                )}
+            </div>
 
             <div style={styles.addCard}>
                 <div style={styles.typeRow}>
@@ -217,6 +280,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px', fontWeight: 600,
     },
     error: { color: color.distract, fontSize: '12px', marginBottom: '8px' },
+    dayChangeRow: { display: 'flex', alignItems: 'center', gap: '10px' },
+    saveBtn: {
+        padding: '10px 16px', background: color.ink, color: color.surface,
+        border: 'none', borderRadius: radius.sm, cursor: 'pointer', fontSize: '14px', fontWeight: 600,
+    },
+    savedNotice: { fontSize: '13px', color: color.accentStrong, fontWeight: 600 },
     sectionTitle: { fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: color.ink },
     empty: { color: color.inkTertiary, fontSize: '14px', textAlign: 'center', padding: '20px' },
     item: {
